@@ -12,8 +12,11 @@ export interface ChipProps extends HTMLAttributes<HTMLSpanElement> {
     dot?: 'static' | 'pulse';
     icon?: ReactNode;
     uppercase?: boolean;
-    /** `ghost` drops the border and lowers contrast: for taxonomy tokens (kind, tags), never for state. */
-    variant?: 'solid' | 'ghost';
+    /**
+     * `ghost` drops the border and lowers contrast: for taxonomy tokens (kind, tags), never for state.
+     * `flat` is the redesign chip: 20 px, borderless, tinted from the theme's tint tokens.
+     */
+    variant?: 'solid' | 'ghost' | 'flat';
     children?: ReactNode;
 }
 
@@ -22,6 +25,16 @@ export interface ChipProps extends HTMLAttributes<HTMLSpanElement> {
  * navigation. Every tag, status and badge in those views goes through here so
  * geometry, typography and colour semantics stay identical across screens.
  */
+/** Tint classes of the `flat` variant; tones without a tint token fall back to `toneStyle`. */
+const FLAT_TONE_CLASS: Partial<Record<Tone, string>> = {
+    neutral: 'bg-surface-primary text-secondary',
+    primary: 'bg-tint-accent-bg text-tint-accent-fg',
+    update: 'bg-tint-accent-bg text-tint-accent-fg',
+    success: 'bg-tint-success-bg text-tint-success-fg',
+    warning: 'bg-tint-warning-bg text-tint-warning-fg',
+    danger: 'bg-tint-danger-bg text-tint-danger-fg',
+};
+
 export function Chip({
     tone = 'neutral',
     shape = 'rounded',
@@ -35,6 +48,26 @@ export function Chip({
     children,
     ...props
 }: ChipProps) {
+    if (variant === 'flat') {
+        const flatClass = FLAT_TONE_CLASS[tone];
+        return (
+            <span
+                {...props}
+                className={clsx(
+                    'inline-flex h-5 items-center gap-1 whitespace-nowrap px-[7px] text-[11px] font-medium',
+                    shape === 'pill' ? 'rounded-full' : 'rounded-md',
+                    uppercase && 'uppercase tracking-wide',
+                    flatClass,
+                    className,
+                )}
+                style={{...(flatClass ? undefined : toneStyle(tone)), ...style}}
+            >
+                {icon}
+                {children}
+            </span>
+        );
+    }
+
     return (
         <span
             {...props}
