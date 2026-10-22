@@ -268,7 +268,7 @@
             "primary": "#f1f5f9",
             "secondary": "#e2e8f0",
             "tertiary": "#cbd5e1",
-            "hover": "#e2e8f0",
+            "hover": "#f1f5f9",
             "active": "#3b82f6",
             "disabled": "#f1f5f9"
           },
@@ -308,6 +308,21 @@
             "modified": "#186bf4",
             "deleted": "#e51414",
             "new": "#17843f"
+          },
+          "status": {
+            "success": "#4b9e72",
+            "warning": "#b4812f",
+            "error": "#c96a6a"
+          },
+          "tint": {
+            "accentBg": "#e2ecfb",
+            "accentText": "#0b5ee7",
+            "successBg": "#e2eee9",
+            "successText": "#157a3a",
+            "warningBg": "#efebe4",
+            "warningText": "#945f06",
+            "dangerBg": "#f6e7e7",
+            "dangerText": "#aa4c4c"
           }
         },
         "typography": {
@@ -325,10 +340,10 @@
         },
         "layout": {
           "borderRadius": {
-            "sm": "0.25rem",
-            "base": "0.5rem",
-            "lg": "0.75rem",
-            "xl": "1rem"
+            "sm": "4px",
+            "base": "8px",
+            "lg": "12px",
+            "xl": "16px"
           },
           "spacing": {
             "xs": "0.25rem",
@@ -336,6 +351,11 @@
             "base": "1rem",
             "lg": "1.5rem",
             "xl": "2rem"
+          },
+          "shadow": {
+            "card": "0 2px 8px 0 rgb(15 23 42 / 0.06)",
+            "menu": "0 8px 24px 0 rgb(15 23 42 / 0.12)",
+            "modal": "0 24px 48px 0 rgb(15 23 42 / 0.25)"
           }
         },
         "monacoTheme": {
@@ -360,12 +380,15 @@
         "--border-focus": "#3b82f6",
         "--border-strong": "#cbd5e1",
         "--border-subtle": "#f1f5f9",
+        "--elevation-card": "0 2px 8px 0 rgb(15 23 42 / 0.06)",
+        "--elevation-menu": "0 8px 24px 0 rgb(15 23 42 / 0.12)",
+        "--elevation-modal": "0 24px 48px 0 rgb(15 23 42 / 0.25)",
         "--font-base": "Inter, system-ui, Avenir, Helvetica, Arial, sans-serif",
         "--font-mono": "JetBrains Mono, Fira Code, Monaco, Consolas, monospace",
-        "--radius-base": "0.5rem",
-        "--radius-lg": "0.75rem",
-        "--radius-sm": "0.25rem",
-        "--radius-xl": "1rem",
+        "--radius-base": "8px",
+        "--radius-lg": "12px",
+        "--radius-sm": "4px",
+        "--radius-xl": "16px",
         "--semantic-boolean": "#7c3aed",
         "--semantic-date": "#12853c",
         "--semantic-deleted": "#e51414",
@@ -377,9 +400,12 @@
         "--semantic-number": "#2563eb",
         "--semantic-pk": "#ae5f05",
         "--semantic-string": "#dc2626",
+        "--status-error": "#c96a6a",
+        "--status-success": "#4b9e72",
+        "--status-warning": "#b4812f",
         "--surface-active": "#3b82f6",
         "--surface-disabled": "#f1f5f9",
-        "--surface-hover": "#e2e8f0",
+        "--surface-hover": "#f1f5f9",
         "--surface-primary": "#f1f5f9",
         "--surface-secondary": "#e2e8f0",
         "--surface-tertiary": "#cbd5e1",
@@ -389,6 +415,14 @@
         "--text-muted": "#5b697e",
         "--text-primary": "#0f172a",
         "--text-secondary": "#475569",
+        "--tint-accent-bg": "#e2ecfb",
+        "--tint-accent-text": "#0b5ee7",
+        "--tint-danger-bg": "#f6e7e7",
+        "--tint-danger-text": "#aa4c4c",
+        "--tint-success-bg": "#e2eee9",
+        "--tint-success-text": "#157a3a",
+        "--tint-warning-bg": "#efebe4",
+        "--tint-warning-text": "#945f06",
         "color-scheme": "light"
       },
       "editorSha256": "024653fca5af2b349d3416b9ef7cf5b1f3ecabdc78189136340313c562a405d1",
@@ -416,11 +450,11 @@
           "editor.wordHighlightStrongBackground": "#1e6ff540",
           "editorLineNumber.foreground": "#5b697e",
           "editorLineNumber.activeForeground": "#475569",
-          "editor.lineHighlightBackground": "#e2e8f0",
+          "editor.lineHighlightBackground": "#f1f5f9",
           "editor.lineHighlightBorder": "transparent",
           "editor.findMatchBackground": "#a0670740",
           "editor.findMatchHighlightBackground": "#a0670730",
-          "editor.hoverHighlightBackground": "#e2e8f0",
+          "editor.hoverHighlightBackground": "#f1f5f9",
           "editorLink.activeForeground": "#1e6ff5",
           "editorGutter.background": "#ffffff",
           "editorGutter.modifiedBackground": "#186bf4",
@@ -480,7 +514,7 @@
           "badge.foreground": "#ffffff",
           "list.activeSelectionBackground": "#3b82f6",
           "list.activeSelectionForeground": "#0f172a",
-          "list.hoverBackground": "#e2e8f0",
+          "list.hoverBackground": "#f1f5f9",
           "list.hoverForeground": "#0f172a",
           "list.focusBackground": "#3b82f6",
           "list.focusForeground": "#0f172a",

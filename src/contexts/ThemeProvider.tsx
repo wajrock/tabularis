@@ -28,6 +28,9 @@ import type {NativeThemeCatalog, NativeThemeContribution} from '@/types/themeCat
 
 type SettingsPatch = Partial<ThemeSettings> | ((previous: ThemeSettings) => Partial<ThemeSettings>);
 
+const REDESIGN_THEME_ID = 'tabularis-light';
+// Tests keep exercising the real theme selection.
+const FORCE_REDESIGN_THEME = import.meta.env.MODE !== 'test';
 export const ThemeProvider = ({children}: {children: ReactNode}) => {
     const {t} = useTranslation();
     const [catalog, setCatalog] = useState(builtinCatalog);
@@ -133,7 +136,15 @@ export const ThemeProvider = ({children}: {children: ReactNode}) => {
         () => selectEffectiveTheme(settings, allThemes, systemDark, preview),
         [settings, allThemes, systemDark, preview],
     );
-    const currentTheme = selection.theme;
+    // Redesign in progress: every screen is rebuilt against Tabularis Light
+    // first, whatever theme is selected. Remove once the other themes are adapted.
+    const currentTheme =
+        // The TS preset first: the native catalog embeds builtin-themes.json in the
+        // Rust binary, which a frontend-only dev reload does not rebuild.
+        (FORCE_REDESIGN_THEME &&
+            (themeRegistry.getPreset(REDESIGN_THEME_ID) ??
+                allThemes.find((theme) => theme.id === REDESIGN_THEME_ID))) ||
+        selection.theme;
 
     useEffect(() => {
         if (isLoading) return;

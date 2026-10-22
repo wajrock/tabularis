@@ -127,6 +127,28 @@ export function applyThemeToCSS(theme: Theme): void {
     root.style.setProperty('--semantic-deleted', theme.colors.semantic.deleted);
     root.style.setProperty('--semantic-new', theme.colors.semantic.new);
 
+    // Redesign tokens: optional until every theme defines them, so a theme
+    // without them must not inherit the previous theme's values.
+    const setOptional = (name: string, value: string | undefined) => {
+        if (value) root.style.setProperty(name, value);
+        else root.style.removeProperty(name);
+    };
+    const {status, tint} = theme.colors;
+    setOptional('--status-success', status?.success);
+    setOptional('--status-warning', status?.warning);
+    setOptional('--status-error', status?.error);
+    setOptional('--tint-accent-bg', tint?.accentBg);
+    setOptional('--tint-accent-text', tint?.accentText);
+    setOptional('--tint-success-bg', tint?.successBg);
+    setOptional('--tint-success-text', tint?.successText);
+    setOptional('--tint-warning-bg', tint?.warningBg);
+    setOptional('--tint-warning-text', tint?.warningText);
+    setOptional('--tint-danger-bg', tint?.dangerBg);
+    setOptional('--tint-danger-text', tint?.dangerText);
+    setOptional('--elevation-card', theme.layout.shadow?.card);
+    setOptional('--elevation-menu', theme.layout.shadow?.menu);
+    setOptional('--elevation-modal', theme.layout.shadow?.modal);
+
     // Typography
     root.style.setProperty('--font-base', theme.typography.fontFamily.base);
     root.style.setProperty('--font-mono', theme.typography.fontFamily.mono);

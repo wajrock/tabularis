@@ -17,7 +17,7 @@ export const tabularisLight: Theme = {
             primary: '#f1f5f9',
             secondary: '#e2e8f0',
             tertiary: '#cbd5e1',
-            hover: '#e2e8f0',
+            hover: '#f1f5f9',
             active: '#3b82f6',
             disabled: '#f1f5f9',
         },
@@ -58,6 +58,21 @@ export const tabularisLight: Theme = {
             deleted: '#e51414',
             new: '#17843f',
         },
+        status: {
+            success: '#4b9e72',
+            warning: '#b4812f',
+            error: '#c96a6a',
+        },
+        tint: {
+            accentBg: '#e2ecfb',
+            accentText: '#0b5ee7',
+            successBg: '#e2eee9',
+            successText: '#157a3a',
+            warningBg: '#efebe4',
+            warningText: '#945f06',
+            dangerBg: '#f6e7e7',
+            dangerText: '#aa4c4c',
+        },
     },
     typography: {
         fontFamily: {
@@ -74,10 +89,10 @@ export const tabularisLight: Theme = {
     },
     layout: {
         borderRadius: {
-            sm: '0.25rem',
-            base: '0.5rem',
-            lg: '0.75rem',
-            xl: '1rem',
+            sm: '4px',
+            base: '8px',
+            lg: '12px',
+            xl: '16px',
         },
         spacing: {
             xs: '0.25rem',
@@ -85,6 +100,11 @@ export const tabularisLight: Theme = {
             base: '1rem',
             lg: '1.5rem',
             xl: '2rem',
+        },
+        shadow: {
+            card: '0 2px 8px 0 rgb(15 23 42 / 0.06)',
+            menu: '0 8px 24px 0 rgb(15 23 42 / 0.12)',
+            modal: '0 24px 48px 0 rgb(15 23 42 / 0.25)',
         },
     },
     monacoTheme: {

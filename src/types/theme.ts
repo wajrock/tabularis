@@ -65,6 +65,27 @@ export interface ThemeColors {
         deleted: string;
         new: string;
     };
+    /**
+     * Redesign tokens. Only Tabularis Light defines them for now; the other
+     * themes (built-in and installed) are adapted once the redesign is done.
+     */
+    /** Status dots: connected/installed, in progress, error. */
+    status?: {
+        success: string;
+        warning: string;
+        error: string;
+    };
+    /** Soft tinted fills and their readable text (badges, CTAs, menu danger rows). */
+    tint?: {
+        accentBg: string;
+        accentText: string;
+        successBg: string;
+        successText: string;
+        warningBg: string;
+        warningText: string;
+        dangerBg: string;
+        dangerText: string;
+    };
 }
 
 export interface ThemeTypography {
@@ -94,6 +115,12 @@ export interface ThemeLayout {
         base: string;
         lg: string;
         xl: string;
+    };
+    /** Elevation shadows (redesign token, see ThemeColors.status). */
+    shadow?: {
+        card: string;
+        menu: string;
+        modal: string;
     };
 }
 

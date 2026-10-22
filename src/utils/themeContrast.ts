@@ -74,6 +74,16 @@ export const CONTRAST_PAIRS: ContrastPair[] = [
         TEXT_CONTRAST,
     ),
     ...pairs(['border.focus'], ['bg.base', 'bg.elevated', 'bg.input'], UI_CONTRAST),
+    // Redesign tokens: skipped for themes that do not define them yet.
+    ...(['accent', 'success', 'warning', 'danger'] as const).flatMap((tone) =>
+        pairs([`tint.${tone}Text`], [`tint.${tone}Bg`], TEXT_CONTRAST),
+    ),
+    ...pairs(['tint.dangerText'], ['bg.base', 'bg.elevated'], TEXT_CONTRAST),
+    ...pairs(
+        ['status.success', 'status.warning', 'status.error'],
+        ['bg.base', 'bg.elevated'],
+        UI_CONTRAST,
+    ),
 ];
 
 function channel(value: number): number {

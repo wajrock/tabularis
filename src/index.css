@@ -34,6 +34,14 @@
 }
 
 @theme {
+    /* The redesign is specified in px. The root font size follows the user's
+       font-size setting, so pin Tailwind's spacing and small text sizes in px. */
+    --spacing: 4px;
+    --text-xs: 12px;
+    --text-xs--line-height: 16px;
+    --text-sm: 13px;
+    --text-sm--line-height: 20px;
+
     /* Expose CSS variables as Tailwind colors */
     --color-base: var(--bg-base);
     --color-elevated: var(--bg-elevated);
@@ -78,6 +86,22 @@
     --color-semantic-modified: var(--semantic-modified);
     --color-semantic-deleted: var(--semantic-deleted);
     --color-semantic-new: var(--semantic-new);
+
+    /* Redesign tokens (see ThemeColors.status / tint and ThemeLayout.shadow). */
+    --color-status-success: var(--status-success);
+    --color-status-warning: var(--status-warning);
+    --color-status-error: var(--status-error);
+    --color-tint-accent-bg: var(--tint-accent-bg);
+    --color-tint-accent-fg: var(--tint-accent-text);
+    --color-tint-success-bg: var(--tint-success-bg);
+    --color-tint-success-fg: var(--tint-success-text);
+    --color-tint-warning-bg: var(--tint-warning-bg);
+    --color-tint-warning-fg: var(--tint-warning-text);
+    --color-tint-danger-bg: var(--tint-danger-bg);
+    --color-tint-danger-fg: var(--tint-danger-text);
+    --shadow-card: var(--elevation-card);
+    --shadow-menu: var(--elevation-menu);
+    --shadow-modal: var(--elevation-modal);
 
     /* Label color over a solid accent fill. text.inverse is only guaranteed
      readable on accent.primary, so the other fills derive black or white
@@ -240,6 +264,30 @@ code {
     -webkit-user-select: text !important;
     -moz-user-select: text !important;
     -ms-user-select: text !important;
+}
+
+/* Tailwind v4 dropped the pointer cursor on buttons: restore it on everything
+   clickable. In the base layer, so `cursor-*` utilities still win. */
+@layer base {
+    button:not(:disabled),
+    [role='button']:not([aria-disabled='true']),
+    [role='menuitem']:not(:disabled),
+    [role='tab'],
+    [role='option'],
+    a[href],
+    summary,
+    select:not(:disabled),
+    label[for],
+    input[type='checkbox']:not(:disabled),
+    input[type='radio']:not(:disabled),
+    input[type='file']:not(:disabled) {
+        cursor: pointer;
+    }
+
+    button:disabled,
+    [role='button'][aria-disabled='true'] {
+        cursor: not-allowed;
+    }
 }
 
 @layer utilities {
