@@ -18,7 +18,7 @@ import {
     Wrench,
 } from 'lucide-react';
 import {useTranslation} from 'react-i18next';
-import {useSearchParams} from 'react-router-dom';
+import {useNavigate} from 'react-router-dom';
 import {invoke} from '@tauri-apps/api/core';
 import {save} from '@tauri-apps/plugin-dialog';
 import {writeTextFile} from '@tauri-apps/plugin-fs';
@@ -53,20 +53,10 @@ export function ThemeManager() {
         original?: CatalogTheme;
     }>();
     const [action, setAction] = useState<ThemeAction>();
-    const [, setSearchParams] = useSearchParams();
+    const navigate = useNavigate();
     // Theme discovery lives in the Plugin Center with the other registry kinds;
     // this only jumps there with the kind filter preset.
-    const browseThemes = () =>
-        setSearchParams(
-            (previous) => {
-                const next = new URLSearchParams(previous);
-                next.set('tab', 'plugins');
-                next.set('kind', 'theme');
-                next.delete('filter');
-                return next;
-            },
-            {replace: true},
-        );
+    const browseThemes = () => navigate('/plugins?kind=theme');
     const [local, setLocal] = useState(false);
     const [recover, setRecover] = useState(false);
     const [exporting, setExporting] = useState<CatalogTheme>();

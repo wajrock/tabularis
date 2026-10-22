@@ -455,6 +455,7 @@
     }
   },
   "settings": {
+    "pluginSettings": "플러그인 설정",
     "title": "설정",
     "general": "일반",
     "privacy": "개인 정보",

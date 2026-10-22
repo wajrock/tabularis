@@ -505,6 +505,7 @@
     }
   },
   "settings": {
+    "pluginSettings": "プラグイン設定",
     "title": "設定",
     "general": "一般",
     "privacy": "プライバシー",

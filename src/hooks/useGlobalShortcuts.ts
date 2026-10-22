@@ -25,7 +25,7 @@ const TYPING_SAFE_SHORTCUTS = [
  * The editor binds it to its own tabs, and /connections is the start screen,
  * so there it stays the window close the platform expects.
  */
-const BACKABLE_ROUTES = new Set(['/settings', '/mcp']);
+const BACKABLE_ROUTES = new Set(['/settings', '/mcp', '/plugins', '/ai-activity']);
 
 /**
  * Registers global keyboard shortcuts for navigation.

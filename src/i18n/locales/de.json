@@ -492,6 +492,7 @@
     }
   },
   "settings": {
+    "pluginSettings": "Plugin-Einstellungen",
     "title": "Einstellungen",
     "general": "Allgemein",
     "privacy": "Datenschutz",

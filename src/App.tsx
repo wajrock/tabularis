@@ -32,6 +32,12 @@ const WHATS_NEW_VERSION_KEY = 'tabularis_last_seen_version';
 const Editor = lazy(() => import('./pages/Editor').then((m) => ({default: m.Editor})));
 const McpPage = lazy(() => import('./pages/McpPage').then((m) => ({default: m.McpPage})));
 const Settings = lazy(() => import('./pages/Settings').then((m) => ({default: m.Settings})));
+const PluginsPage = lazy(() =>
+    import('./pages/PluginsPage').then((m) => ({default: m.PluginsPage})),
+);
+const AiActivityPage = lazy(() =>
+    import('./pages/AiActivityPage').then((m) => ({default: m.AiActivityPage})),
+);
 const SchemaDiagramPage = lazy(() =>
     import('./pages/SchemaDiagramPage').then((m) => ({
         default: m.SchemaDiagramPage,
@@ -165,6 +171,14 @@ export function App() {
                                                     />
                                                     <Route path="mcp" element={<McpPage />} />
                                                     <Route path="settings" element={<Settings />} />
+                                                    <Route
+                                                        path="plugins"
+                                                        element={<PluginsPage />}
+                                                    />
+                                                    <Route
+                                                        path="ai-activity"
+                                                        element={<AiActivityPage />}
+                                                    />
                                                 </Route>
                                                 <Route
                                                     path="/schema-diagram"

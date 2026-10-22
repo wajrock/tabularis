@@ -1,5 +1,5 @@
-import {useCallback, useState} from 'react';
-import {useSearchParams} from 'react-router-dom';
+import {useState} from 'react';
+import {Navigate, useSearchParams} from 'react-router-dom';
 import {useTranslation} from 'react-i18next';
 import {
     Settings as SettingsIcon,
@@ -8,10 +8,8 @@ import {
     Sparkles,
     ScrollText,
     Keyboard,
-    Plug,
     Info,
     FileJson,
-    Shield,
     Cable,
     Archive,
     EyeOff,
@@ -27,12 +25,10 @@ import {LocalizationTab} from '@/components/settings/LocalizationTab';
 import {AiTab} from '@/components/settings/AiTab';
 import {LogsTab} from '@/components/settings/LogsTab';
 import {ShortcutsTab} from '@/components/settings/ShortcutsTab';
-import {PluginsTab} from '@/components/settings/PluginsTab';
 import {SshTab} from '@/components/settings/SshTab';
 import {BackupTab} from '@/components/settings/BackupTab';
 import {StorageTab} from '@/components/settings/StorageTab';
 import {NetworkTab} from '@/components/settings/NetworkTab';
-import {AiActivityPanel} from '@/components/settings/AiActivityPanel';
 import {InfoTab} from '@/components/settings/InfoTab';
 import {PluginSettingsPage} from '@/components/settings/PluginSettingsPage';
 import {useDrivers} from '@/hooks/useDrivers';
@@ -51,18 +47,13 @@ type SettingsTab =
     | 'appearance'
     | 'localization'
     | 'ai'
-    | 'ai-activity'
     | 'logs'
     | 'shortcuts'
-    | 'plugins'
     | 'info'
     | `plugin:${string}`;
 
-interface PluginSidebarChange {
-    type: 'install' | 'remove';
-    pluginId: string;
-    pluginName?: string;
-}
+/** Former tabs that are now top-level pages; old `?tab=` links redirect there. */
+const MOVED_TABS = new Set(['plugins', 'ai-activity']);
 
 const TAB_ITEMS: Array<{
     id: SettingsTab;
@@ -74,12 +65,10 @@ const TAB_ITEMS: Array<{
     {id: 'ssh', icon: Cable, labelKey: 'sshConnections.title'},
     {id: 'storage', icon: FolderCog, labelKey: 'settings.storage.title'},
     {id: 'backup', icon: Archive, labelKey: 'settings.backup.title'},
-    {id: 'plugins', icon: Plug, labelKey: 'settings.plugins.title'},
     {id: 'appearance', icon: Palette, labelKey: 'settings.appearance'},
     {id: 'privacy', icon: EyeOff, labelKey: 'settings.privacy'},
     {id: 'localization', icon: Languages, labelKey: 'settings.localization'},
     {id: 'ai', icon: Sparkles, labelKey: 'settings.ai.tab'},
-    {id: 'ai-activity', icon: Shield, labelKey: 'settings.aiActivity'},
     {id: 'logs', icon: ScrollText, labelKey: 'settings.logs'},
     {id: 'shortcuts', icon: Keyboard, labelKey: 'settings.shortcuts.title'},
     {id: 'info', icon: Info, labelKey: 'settings.info'},
@@ -95,10 +84,8 @@ const TAB_COMPONENTS: Partial<Record<SettingsTab, React.ComponentType>> = {
     appearance: AppearanceTab,
     localization: LocalizationTab,
     ai: AiTab,
-    'ai-activity': AiActivityPanel,
     logs: LogsTab,
     shortcuts: ShortcutsTab,
-    plugins: PluginsTab,
     info: InfoTab,
 };
 
@@ -106,7 +93,7 @@ export const Settings = () => {
     const {t} = useTranslation();
     const updates = useAvailableUpdates();
     const [searchParams, setSearchParams] = useSearchParams();
-    const {allDrivers, installedPlugins, refresh: refreshDrivers} = useDrivers();
+    const {allDrivers, installedPlugins} = useDrivers();
     const {settings} = useSettings();
     const activeExternalDrivers =
         settings.activeExternalDrivers ?? installedPlugins.map((p) => p.id);
@@ -128,25 +115,6 @@ export const Settings = () => {
         );
     };
     const [isConfigJsonModalOpen, setIsConfigJsonModalOpen] = useState(false);
-    const [pluginSidebarOverrides, setPluginSidebarOverrides] = useState<
-        Record<string, string | null>
-    >({});
-
-    const handlePluginsChanged = useCallback(
-        (change: PluginSidebarChange) => {
-            setPluginSidebarOverrides((prev) => {
-                const next = {...prev};
-                if (change.type === 'install') {
-                    next[change.pluginId] = change.pluginName ?? change.pluginId;
-                } else {
-                    next[change.pluginId] = null;
-                }
-                return next;
-            });
-            refreshDrivers();
-        },
-        [refreshDrivers],
-    );
 
     const pluginSettingItems = new Map<string, {id: string; name: string}>();
 
@@ -161,25 +129,11 @@ export const Settings = () => {
     }
 
     for (const plugin of installedPlugins) {
-        if (pluginSidebarOverrides[plugin.id] === null) continue;
         if (!activeExternalDrivers.includes(plugin.id)) continue;
         pluginSettingItems.set(plugin.id, {
             id: plugin.id,
             name: plugin.name,
         });
-    }
-
-    for (const [pluginId, pluginName] of Object.entries(pluginSidebarOverrides)) {
-        if (
-            pluginName !== null &&
-            !installedPlugins.some((plugin) => plugin.id === pluginId) &&
-            activeExternalDrivers.includes(pluginId)
-        ) {
-            pluginSettingItems.set(pluginId, {
-                id: pluginId,
-                name: pluginName,
-            });
-        }
     }
 
     const pluginTabs = Array.from(pluginSettingItems.values()).sort((a, b) =>
@@ -189,11 +143,18 @@ export const Settings = () => {
     const requestedPluginId = isRequestedPluginTab ? requestedTab.slice('plugin:'.length) : null;
     const hasRequestedPluginTab =
         requestedPluginId !== null && pluginTabs.some((plugin) => plugin.id === requestedPluginId);
-    const activeTab = isRequestedPluginTab && !hasRequestedPluginTab ? 'plugins' : requestedTab;
+    const activeTab = isRequestedPluginTab && !hasRequestedPluginTab ? 'general' : requestedTab;
     const ActiveComponent = TAB_COMPONENTS[activeTab];
     const activePluginId = activeTab.startsWith('plugin:')
         ? activeTab.slice('plugin:'.length)
         : null;
+
+    if (tabParam && MOVED_TABS.has(tabParam)) {
+        const rest = new URLSearchParams(searchParams);
+        rest.delete('tab');
+        const query = rest.toString();
+        return <Navigate to={`/${tabParam}${query ? `?${query}` : ''}`} replace />;
+    }
 
     return (
         <div className="h-full flex bg-base">
@@ -201,73 +162,59 @@ export const Settings = () => {
             <nav className="w-52 flex flex-col border-r border-default bg-elevated shrink-0">
                 <div className="flex-1 py-2 px-2 overflow-y-auto space-y-0.5">
                     {TAB_ITEMS.map(({id, icon: Icon, labelKey}) => (
-                        <div key={id} className="space-y-1">
-                            <UpdateTooltip
-                                className="flex"
-                                disabled={
-                                    !(
-                                        (id === 'plugins' && updates.pluginCount > 0) ||
-                                        (id === 'info' && updates.coreCount > 0)
-                                    )
-                                }
-                                label={
-                                    id === 'plugins' ? updates.pluginsTooltip : updates.coreTooltip
-                                }
-                                details={id === 'plugins' ? updates.pluginDetails : undefined}
+                        <UpdateTooltip
+                            key={id}
+                            className="flex"
+                            disabled={!(id === 'info' && updates.coreCount > 0)}
+                            label={updates.coreTooltip}
+                        >
+                            <button
+                                onClick={() => setRequestedTab(id)}
+                                className={clsx(
+                                    'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left',
+                                    activeTab === id
+                                        ? 'bg-surface-secondary text-primary'
+                                        : 'text-muted hover:text-primary hover:bg-surface-secondary/50',
+                                )}
                             >
-                                <button
-                                    onClick={() => setRequestedTab(id)}
-                                    className={clsx(
-                                        'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left',
-                                        activeTab === id ||
-                                            (id === 'plugins' && activePluginId !== null)
-                                            ? 'bg-surface-secondary text-primary'
-                                            : 'text-muted hover:text-primary hover:bg-surface-secondary/50',
-                                    )}
-                                >
-                                    <Icon size={16} />
-                                    <span className="truncate">{t(labelKey)}</span>
-                                    {id === 'plugins' && (
-                                        <UpdateBadge
-                                            count={updates.pluginCount}
-                                            tooltip={updates.pluginsTooltip}
-                                            className="ml-auto"
-                                        />
-                                    )}
-                                    {id === 'info' && (
-                                        <UpdateBadge
-                                            count={updates.coreCount}
-                                            tooltip={updates.coreTooltip}
-                                            className="ml-auto"
-                                        />
-                                    )}
-                                </button>
-                            </UpdateTooltip>
-
-                            {id === 'plugins' && pluginTabs.length > 0 && (
-                                <div className="pl-4 space-y-0.5">
-                                    {pluginTabs.map((plugin) => {
-                                        const pluginTabId = `plugin:${plugin.id}` as const;
-                                        return (
-                                            <button
-                                                key={plugin.id}
-                                                onClick={() => setRequestedTab(pluginTabId)}
-                                                className={clsx(
-                                                    'w-full px-3 py-1.5 rounded-lg text-xs text-left transition-colors truncate',
-                                                    activeTab === pluginTabId
-                                                        ? 'bg-surface-secondary text-primary'
-                                                        : 'text-muted hover:text-primary hover:bg-surface-secondary/50',
-                                                )}
-                                                title={plugin.name}
-                                            >
-                                                {plugin.name}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            )}
-                        </div>
+                                <Icon size={16} />
+                                <span className="truncate">{t(labelKey)}</span>
+                                {id === 'info' && (
+                                    <UpdateBadge
+                                        count={updates.coreCount}
+                                        tooltip={updates.coreTooltip}
+                                        className="ml-auto"
+                                    />
+                                )}
+                            </button>
+                        </UpdateTooltip>
                     ))}
+
+                    {pluginTabs.length > 0 && (
+                        <div className="pt-3 space-y-0.5">
+                            <h2 className="px-3 pb-1 text-xs font-medium text-muted">
+                                {t('settings.pluginSettings')}
+                            </h2>
+                            {pluginTabs.map((plugin) => {
+                                const pluginTabId = `plugin:${plugin.id}` as const;
+                                return (
+                                    <button
+                                        key={plugin.id}
+                                        onClick={() => setRequestedTab(pluginTabId)}
+                                        className={clsx(
+                                            'w-full px-3 py-1.5 rounded-lg text-xs text-left transition-colors truncate',
+                                            activeTab === pluginTabId
+                                                ? 'bg-surface-secondary text-primary'
+                                                : 'text-muted hover:text-primary hover:bg-surface-secondary/50',
+                                        )}
+                                        title={plugin.name}
+                                    >
+                                        {plugin.name}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    )}
                 </div>
 
                 {/* Config JSON button */}
@@ -287,13 +234,6 @@ export const Settings = () => {
                 <div className="max-w-5xl mx-auto p-8">
                     {activePluginId ? (
                         <PluginSettingsPage key={activePluginId} pluginId={activePluginId} />
-                    ) : activeTab === 'plugins' ? (
-                        <PluginsTab
-                            onOpenPluginSettings={(pluginId) =>
-                                setRequestedTab(`plugin:${pluginId}`)
-                            }
-                            onPluginsChanged={handlePluginsChanged}
-                        />
                     ) : (
                         ActiveComponent && <ActiveComponent />
                     )}

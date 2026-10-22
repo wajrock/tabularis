@@ -6,11 +6,10 @@ import {createInstance} from 'i18next';
 import en from '@/i18n/locales/en.json';
 import itLocale from '@/i18n/locales/it.json';
 import {Settings} from '@/pages/Settings';
+import {PluginsPage} from '@/pages/PluginsPage';
+import {AiActivityPage} from '@/pages/AiActivityPage';
 import {PluginUpdateToast} from '@/components/plugins/PluginUpdateToast';
 import {ToastProvider} from '@/contexts/ToastProvider';
-import {useAvailableUpdates} from '@/hooks/useAvailableUpdates';
-import {NavItem} from '@/components/layout/sidebar/NavItem';
-import {UpdateBadge} from '@/components/ui/UpdateBadge';
 import {usePluginRegistry} from '@/hooks/usePluginRegistry';
 import {useUpdate} from '@/hooks/useUpdate';
 import type {RegistryPluginWithStatus} from '@/types/plugins';
@@ -111,29 +110,17 @@ const plugin: RegistryPluginWithStatus = {
     releases: [],
 };
 
-function SettingsLink() {
-    const updates = useAvailableUpdates();
-    return (
-        <NavItem
-            to="/settings"
-            icon={() => null}
-            label="Impostazioni"
-            tooltip={updates.summary}
-            badge={<UpdateBadge count={updates.totalCount} tooltip={updates.summary} />}
-        />
-    );
-}
-
 function renderApp(path = '/settings') {
     return render(
         <StrictMode>
             <ToastProvider>
                 <MemoryRouter initialEntries={[path]}>
                     <PluginUpdateToast />
-                    <SettingsLink />
                     <Routes>
                         <Route path="/connections" element={<div>Connections</div>} />
                         <Route path="/settings" element={<Settings />} />
+                        <Route path="/plugins" element={<PluginsPage />} />
+                        <Route path="/ai-activity" element={<AiActivityPage />} />
                     </Routes>
                 </MemoryRouter>
             </ToastProvider>
@@ -166,17 +153,21 @@ describe('update navigation', () => {
         });
     });
 
-    it('hides update badges even when built-in driver settings exist', () => {
+    it('lists plugin settings pages without update badges when nothing is outdated', () => {
         renderApp();
+        expect(screen.getByRole('heading', {name: 'Impostazioni dei plugin'})).toBeInTheDocument();
         expect(screen.getByRole('button', {name: 'MySQL'})).toBeInTheDocument();
         expect(screen.queryByRole('status')).not.toBeInTheDocument();
-        expect(
-            screen.getByRole('link', {name: 'Impostazioni'}).querySelector('[title]'),
-        ).toBeNull();
-        expect(screen.getByRole('button', {name: 'Plugin'}).querySelector('[title]')).toBeNull();
+        expect(within(screen.getByRole('button', {name: 'Info'})).queryByText('1')).toBeNull();
     });
 
-    it('aggregates the rail counter and splits core/plugin counts in the settings navigation', () => {
+    it('no longer lists Plugins and AI Activity among the settings tabs', () => {
+        renderApp();
+        expect(screen.queryByRole('button', {name: /^Plugin$/})).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', {name: /^Attività/})).not.toBeInTheDocument();
+    });
+
+    it('shows the core update counter and details on Info', () => {
         vi.mocked(useUpdate).mockReturnValue({
             ...useUpdate(),
             availableUpdate: {
@@ -189,65 +180,24 @@ describe('update navigation', () => {
                 downloadUrls: [],
             },
         });
-        vi.mocked(usePluginRegistry).mockReturnValue({
-            ...usePluginRegistry(),
-            updates: [plugin, {...plugin, id: 'redis', name: 'Redis'}],
-        });
         renderApp();
-        const link = screen.getByRole('link', {name: /^Impostazioni:/});
-        expect(link).not.toHaveAttribute('title');
-        expect(link.querySelector('[title]')).toBeNull();
-        const railBadge = within(link).getByLabelText(
-            '1 aggiornamento core disponibile, 2 aggiornamenti plugins disponibili',
-        );
-        expect(railBadge).toHaveTextContent('3');
-        expect(railBadge.style.backgroundColor).toContain('--accent-primary');
-        const pluginsButton = screen.getByRole('button', {name: /^Plugin/});
-        const pluginBadge = within(pluginsButton).getByLabelText(
-            '2 aggiornamenti plugins disponibili',
-        );
-        fireEvent.mouseEnter(pluginBadge);
-        expect(screen.getByRole('tooltip')).toHaveTextContent('PostgreSQL 1.0.0 → 2.0.0');
-        expect(screen.getByRole('tooltip')).toHaveTextContent('Redis 1.0.0 → 2.0.0');
-        expect(within(screen.getByRole('tooltip')).getAllByRole('listitem')).toHaveLength(2);
-        fireEvent.mouseLeave(pluginBadge);
         const infoButton = screen.getByRole('button', {name: /^Info/});
-        const coreBadge = within(infoButton).getByText('1');
+        expect(within(infoButton).getByText('1')).toHaveClass('rounded-full');
         fireEvent.focus(infoButton);
         expect(screen.getByRole('tooltip')).toHaveTextContent('Tabularis 0.25.0 è disponibile');
-        // Same pill everywhere: the rail, Info and Plugins counters share tone and shape.
-        for (const badge of [railBadge, coreBadge, pluginBadge]) {
-            expect(badge).toHaveClass('rounded-full');
-            expect(badge.style.backgroundColor).toBe(railBadge.style.backgroundColor);
-        }
-        expect(screen.getAllByRole('status')).toHaveLength(1);
     });
 
-    it('bounds a long plugin list and closes the tooltip with Escape', () => {
-        vi.mocked(usePluginRegistry).mockReturnValue({
-            ...usePluginRegistry(),
-            updates: Array.from({length: 12}, (_, index) => ({
-                ...plugin,
-                id: `plugin-${index}`,
-                name: `Plugin ${index}`,
-            })),
-        });
-        renderApp();
-        const button = screen.getByRole('button', {name: /^Plugin/});
-        fireEvent.focus(button);
-        const tooltip = screen.getByRole('tooltip');
-        expect(button).toHaveAttribute('aria-describedby', tooltip.id);
-        expect(within(tooltip).getAllByRole('listitem')).toHaveLength(6);
-        expect(tooltip).toHaveTextContent('Plugin 4 1.0.0 → 2.0.0');
-        expect(tooltip).not.toHaveTextContent('Plugin 5');
-        expect(tooltip).toHaveTextContent('Altri 7');
-        expect(tooltip.parentElement).toBe(document.body);
-        fireEvent.keyDown(button, {key: 'Escape'});
-        expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
-        expect(button).not.toHaveAttribute('aria-describedby');
+    it('redirects the former tabs to their pages and keeps the filters', async () => {
+        renderApp('/settings?tab=plugins&filter=updates');
+        expect(await screen.findByTestId('plugins-content')).toHaveTextContent('updates');
     });
 
-    it('opens the updates filter by clicking the startup toast and does not repeat on navigation', async () => {
+    it('redirects the former AI activity tab to its page', async () => {
+        renderApp('/settings?tab=ai-activity');
+        expect(await screen.findByText('AiActivityPanel')).toBeInTheDocument();
+    });
+
+    it('opens the updates filter by clicking the startup toast and does not repeat', async () => {
         vi.mocked(usePluginRegistry).mockReturnValue({
             ...usePluginRegistry(),
             updates: [plugin],
@@ -261,10 +211,6 @@ describe('update navigation', () => {
             }),
         );
         expect(await screen.findByTestId('plugins-content')).toHaveTextContent('updates');
-        expect(screen.queryByRole('status')).not.toBeInTheDocument();
-        fireEvent.click(screen.getByRole('button', {name: 'Info'}));
-        fireEvent.click(screen.getByRole('button', {name: /^Plugin/}));
-        expect(screen.getByTestId('plugins-content')).toHaveTextContent('all');
         expect(screen.queryByRole('status')).not.toBeInTheDocument();
     });
 

@@ -487,6 +487,7 @@
     "databaseCount_other": "{{count}} баз данных"
   },
   "settings": {
+    "pluginSettings": "Настройки плагинов",
     "title": "Настройки",
     "general": "Общие",
     "privacy": "Конфиденциальность",

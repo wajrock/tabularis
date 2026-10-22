@@ -510,6 +510,7 @@
     }
   },
   "settings": {
+    "pluginSettings": "Mga setting ng plugin",
     "title": "Mga Setting",
     "general": "Pangkalahatan",
     "privacy": "Privacy",

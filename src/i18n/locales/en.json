@@ -510,6 +510,7 @@
     }
   },
   "settings": {
+    "pluginSettings": "Plugin settings",
     "title": "Settings",
     "general": "General",
     "privacy": "Privacy",

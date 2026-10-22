@@ -524,6 +524,7 @@
     }
   },
   "settings": {
+    "pluginSettings": "Impostazioni dei plugin",
     "title": "Impostazioni",
     "general": "Generali",
     "privacy": "Privacy",

@@ -26,7 +26,7 @@ export function PluginUpdateToast() {
             ...previous,
             ...Object.fromEntries(unseen.map((plugin) => [plugin.id, plugin.latest_version])),
         }));
-        const openPlugins = () => navigate('/settings?tab=plugins&filter=updates');
+        const openPlugins = () => navigate('/plugins?filter=updates');
         showToast(t('update.badges.plugins', {count: unseen.length}), {
             kind: 'update',
             title: t('update.badges.toastTitle'),

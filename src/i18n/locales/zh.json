@@ -491,6 +491,7 @@
     }
   },
   "settings": {
+    "pluginSettings": "插件设置",
     "seconds": "秒",
     "title": "设置",
     "general": "通用",
