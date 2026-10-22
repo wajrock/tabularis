@@ -1,5 +1,5 @@
 import {describe, it, expect, vi, afterEach} from 'vitest';
-import {rectContains, startPointerDrag} from '@/utils/pointerDrag';
+import {createDragGhost, rectContains, startPointerDrag} from '@/utils/pointerDrag';
 
 const move = (x: number, y: number) =>
     document.dispatchEvent(new MouseEvent('mousemove', {clientX: x, clientY: y}));
@@ -101,5 +101,33 @@ describe('startPointerDrag', () => {
         document.dispatchEvent(new MouseEvent('click', {bubbles: true}));
         expect(clickSpy).toHaveBeenCalledTimes(1);
         document.removeEventListener('click', clickSpy);
+    });
+});
+
+describe('createDragGhost', () => {
+    it('follows the pointer with the grab offset, dims the source, and cleans up', () => {
+        const source = document.createElement('div');
+        source.setAttribute('data-connection-id', 'one');
+        source.textContent = 'card';
+        source.getBoundingClientRect = () =>
+            ({left: 100, top: 50, width: 200, height: 80}) as DOMRect;
+        document.body.appendChild(source);
+
+        const ghost = createDragGhost(source, 110, 60);
+        const copy = document.body.lastElementChild as HTMLElement;
+        expect(copy).not.toBe(source);
+        expect(copy).toHaveTextContent('card');
+        expect(copy).not.toHaveAttribute('data-connection-id');
+        expect(copy.style.pointerEvents).toBe('none');
+        expect(copy.style.transform).toBe('translate(100px, 50px)');
+        expect(source.style.opacity).toBe('0.4');
+
+        ghost.move(300, 200);
+        expect(copy.style.transform).toBe('translate(290px, 190px)');
+
+        ghost.remove();
+        expect(copy.isConnected).toBe(false);
+        expect(source.style.opacity).toBe('');
+        source.remove();
     });
 });

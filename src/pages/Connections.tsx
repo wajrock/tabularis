@@ -1,7 +1,6 @@
 import {restoreSession} from '@/utils/restoreSession';
 import {getCurrentWindow} from '@tauri-apps/api/window';
 import {lazy, Suspense, useState, useEffect, useMemo, useRef, useCallback} from 'react';
-import {createPortal} from 'react-dom';
 import {useNavigate, useLocation} from 'react-router-dom';
 import {useTranslation} from 'react-i18next';
 import {LoadingState} from '@/components/ui/LoadingState';
@@ -11,29 +10,24 @@ import {invoke} from '@tauri-apps/api/core';
 import {save} from '@tauri-apps/plugin-dialog';
 import {writeTextFile} from '@tauri-apps/plugin-fs';
 import {
-    Database,
     Plus,
-    Edit,
+    Pencil,
+    Play,
+    AppWindowMac,
+    FolderSymlink,
+    FolderMinus,
+    Power,
+    Copy,
     Trash2,
-    Search,
     X,
-    LayoutGrid,
-    List,
     FolderPlus,
     Folder,
-    Download,
-    FolderInput,
-    FolderTree,
-    ChevronDown,
-    AppWindow,
     ArrowLeftRight,
-    Loader2,
 } from 'lucide-react';
 import {useDatabase} from '@/hooks/useDatabase';
 import {useDrivers} from '@/hooks/useDrivers';
 import {useSettings} from '@/hooks/useSettings';
-import clsx from 'clsx';
-import {ContextMenu} from '@/components/ui/ContextMenu';
+import {Menu, type MenuEntry} from '@/components/ui/Menu';
 import type {SavedConnection} from '@/contexts/DatabaseContext';
 import {flattenGroupTree} from '@/utils/groupTree';
 import {toErrorMessage} from '@/utils/errors';
@@ -46,15 +40,23 @@ import {
     type GroupDropPosition,
     migrationDirectionForDriver,
 } from '@/utils/connections';
+import clsx from 'clsx';
 import {fuzzyFilter} from '@/utils/fuzzy';
+import {createDragGhost, type DragGhost} from '@/utils/pointerDrag';
 import {useOpenConnectionInNewWindow} from '@/hooks/useOpenConnectionInNewWindow';
 import {useConnectionTags} from '@/hooks/useConnectionTags';
 import {GroupHeader} from '@/components/connections/GroupHeader';
 import {ConnectionCard} from '@/components/connections/ConnectionCard';
 import {ConnectionListItem} from '@/components/connections/ConnectionListItem';
+import {ConnectionsEmptyState} from '@/components/connections/ConnectionsEmptyState';
+import {ConnectionsHeader} from '@/components/connections/ConnectionsHeader';
+import {ConnectionsNoResults} from '@/components/connections/ConnectionsNoResults';
+import {ConnectionsSelectionBar} from '@/components/connections/ConnectionsSelectionBar';
+import {GroupDropZone} from '@/components/connections/GroupDropZone';
+import {UngroupedHeader} from '@/components/connections/UngroupedHeader';
+import {ConnectionsToolbar} from '@/components/connections/ConnectionsToolbar';
 import {ConnectionErrorBanner} from '@/components/ConnectionErrorBanner';
 import {PostgresPluginMigrationBanner} from '@/components/banners/PostgresPluginMigrationBanner';
-import {BetaBadge} from '@/components/ui/BetaBadge';
 import {useCreateSqliteDatabase} from '@/hooks/useCreateSqliteDatabase';
 import {
     useBuiltinPostgresMigration,
@@ -66,6 +68,9 @@ import {useEscapeKey} from '@/hooks/useEscapeKey';
 import {buildPluginIssueUrl, resolvePluginRepoUrl} from '@/utils/pluginIssueReport';
 import {openUrl} from '@tauri-apps/plugin-opener';
 import {APP_VERSION} from '@/version';
+
+/** Drop target id of the "Ungrouped" section (connections outside any group). */
+const UNGROUPED_DROP_ID = '__ungrouped__';
 
 const NewConnectionModal = lazy(() =>
     import('@/components/modals/NewConnectionModal').then((m) => ({
@@ -118,31 +123,14 @@ export const Connections = () => {
     const {showToast} = useToast();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isImportAppModalOpen, setIsImportAppModalOpen] = useState(false);
-    const [isImportMenuOpen, setIsImportMenuOpen] = useState(false);
     const [isMigrationChecklistOpen, setIsMigrationChecklistOpen] = useState(false);
-    const importMenuBtnRef = useRef<HTMLButtonElement>(null);
-    const [importMenuPos, setImportMenuPos] = useState({top: 0, right: 0});
-    const closeImportMenu = useCallback(() => setIsImportMenuOpen(false), []);
-    useEscapeKey(isImportMenuOpen, closeImportMenu);
-
-    // The header clips its overflow, so the dropup menu is portaled to the body
-    // and positioned just under the trigger button.
-    const toggleImportMenu = () => {
-        if (!isImportMenuOpen && importMenuBtnRef.current) {
-            const rect = importMenuBtnRef.current.getBoundingClientRect();
-            setImportMenuPos({
-                top: rect.bottom + 8,
-                right: window.innerWidth - rect.right,
-            });
-        }
-        setIsImportMenuOpen((v) => !v);
-    };
     const [editingConnection, setEditingConnection] = useState<SavedConnection | null>(null);
     const connections = contextConnections as SavedConnection[];
     const [error, setError] = useState<string | null>(null);
     const [connectingId, setConnectingId] = useState<string | null>(null);
     const [search, setSearch] = useState('');
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+    const [isUngroupedCollapsed, setIsUngroupedCollapsed] = useState(false);
     const [isCreatingGroup, setIsCreatingGroup] = useState(false);
     const [newGroupName, setNewGroupName] = useState('');
     const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
@@ -171,6 +159,7 @@ export const Connections = () => {
     const [isExportModalOpen, setIsExportModalOpen] = useState(false);
     const [exportSelectionOnly, setExportSelectionOnly] = useState(false);
     const [dragOverGroupId, setDragOverGroupId] = useState<string | null>(null);
+    const [isDraggingGroupedConnection, setIsDraggingGroupedConnection] = useState(false);
     const [groupDrop, setGroupDrop] = useState<{
         id: string;
         position: GroupDropPosition;
@@ -183,7 +172,6 @@ export const Connections = () => {
     const isRenameCancelledRef = useRef(false);
     // Multi-select for bulk actions (delete / move to group)
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-    const [bulkMoveMenu, setBulkMoveMenu] = useState<{x: number; y: number} | null>(null);
 
     useEffect(() => {
         void loadConnections({ifNeeded: true});
@@ -625,6 +613,7 @@ export const Connections = () => {
     };
 
     const clearSelection = () => setSelectedIds(new Set());
+    useEscapeKey(selectedIds.size > 0, clearSelection);
 
     const handleBulkDelete = () => {
         const ids = [...selectedIds];
@@ -709,7 +698,6 @@ export const Connections = () => {
     };
 
     const handleCreateSqliteDatabase = async () => {
-        setIsImportMenuOpen(false);
         setError(null);
         try {
             const connection = await createSqliteDatabase();
@@ -855,6 +843,15 @@ export const Connections = () => {
     const filteredUngroupedConnections = useMemo(() => {
         return fuzzyFilter(ungroupedConnections, search, searchTarget);
     }, [ungroupedConnections, search, searchTarget]);
+    // Connections the current search shows, for "Select all".
+    const visibleConnectionIds = [
+        ...Object.values(filteredGroupedConnections).flat(),
+        ...filteredUngroupedConnections,
+    ].map((c) => c.id);
+    const hasNoSearchResults =
+        !!search.trim() &&
+        filteredUngroupedConnections.length === 0 &&
+        Object.keys(filteredGroupedConnections).length === 0;
 
     const openCount = connections.filter((c) => isConnectionOpenAnywhere(c.id)).length;
     // Connections open in THIS window — gates the "Open in New Window" action,
@@ -867,6 +864,98 @@ export const Connections = () => {
         setConnectionContextMenu({x: e.clientX, y: e.clientY, connId: conn.id});
     };
 
+    const connectionMenuItems = (conn: SavedConnection): MenuEntry[] => {
+        const currentGroupId = conn.group_id;
+        // Flatten the group tree in DFS order so the menu mirrors the
+        // nested sidebar structure. The group the connection already
+        // lives in is skipped, but its descendants remain valid targets.
+        const groupTree = flattenGroupTree(connectionGroups).filter(
+            ({group}) => group.id !== currentGroupId,
+        );
+        const isDriverEnabled = drivers.some((d) => d.id === conn.params.driver);
+        const migration = migrationDirectionForDriver(conn.params.driver, allDrivers);
+        return [
+            {
+                label: t('connections.open'),
+                icon: Play,
+                disabled: !isDriverEnabled,
+                onSelect: () => void handleConnect(conn),
+            },
+            {
+                label: t('sidebar.openInNewWindow'),
+                icon: AppWindowMac,
+                disabled: !hasLocalOpenConnections,
+                onSelect: () => void handleOpenInNewWindow(conn),
+            },
+            'separator',
+            {
+                label: t('connections.edit'),
+                icon: Pencil,
+                disabled: !isDriverEnabled,
+                onSelect: () => void openEdit(conn),
+            },
+            {
+                label: t('connections.duplicate'),
+                icon: Copy,
+                disabled: !isDriverEnabled,
+                onSelect: () => void handleDuplicate(conn.id),
+            },
+            ...(groupTree.length > 0
+                ? [
+                      {
+                          label: t('groups.moveToGroup'),
+                          icon: FolderSymlink,
+                          submenu: groupTree.map(({group, depth}) => ({
+                              label: group.name,
+                              icon: Folder,
+                              indent: depth,
+                              onSelect: () => void handleMoveToGroup(conn.id, group.id),
+                          })),
+                      },
+                  ]
+                : []),
+            ...(currentGroupId
+                ? [
+                      {
+                          label: t('groups.removeFromGroup'),
+                          icon: FolderMinus,
+                          onSelect: () => void handleMoveToGroup(conn.id, null),
+                      },
+                  ]
+                : []),
+            // Built-in driver deprecation window only.
+            ...(migration
+                ? [
+                      {
+                          label:
+                              migration === 'to-plugin'
+                                  ? t('migration.switchToPlugin')
+                                  : t('migration.switchToBuiltin'),
+                          icon: ArrowLeftRight,
+                          onSelect: () => handleMigrate(conn, migration),
+                      },
+                  ]
+                : []),
+            ...(isConnectionOpenAnywhere(conn.id)
+                ? [
+                      'separator' as const,
+                      {
+                          label: t('connections.disconnect'),
+                          icon: Power,
+                          onSelect: () => void handleDisconnect(conn.id),
+                      },
+                  ]
+                : []),
+            'separator',
+            {
+                label: t('connections.delete'),
+                icon: Trash2,
+                danger: true,
+                onSelect: () => void handleDelete(conn.id),
+            },
+        ];
+    };
+
     const connCardProps = (conn: SavedConnection) => ({
         conn,
         connectingId,
@@ -874,22 +963,15 @@ export const Connections = () => {
         enabledDrivers: drivers,
         tags,
         onConnect: () => handleConnect(conn),
-        onDisconnect: () => handleDisconnect(conn.id),
         onEdit: () => void openEdit(conn),
-        onDuplicate: () => handleDuplicate(conn.id),
-        onDelete: () => handleDelete(conn.id),
+        menuItems: () => connectionMenuItems(conn),
         onContextMenu: (e: React.MouseEvent<HTMLDivElement>) => handleConnContextMenu(e, conn),
         onMouseDown: (e: React.MouseEvent<HTMLDivElement>) =>
             handleConnectionMouseDown(e, conn.id, conn.group_id),
         selected: selectedIds.has(conn.id),
         dropPosition: connectionDrop?.id === conn.id ? connectionDrop.position : null,
         dropAxis: connectionDrop?.axis ?? 'y',
-        selectionActive: selectedIds.size > 0,
         onToggleSelect: () => toggleSelect(conn.id),
-        onMigrate: () => {
-            const direction = migrationDirectionForDriver(conn.params.driver, allDrivers);
-            if (direction) handleMigrate(conn, direction);
-        },
     });
 
     const handleConnectionMouseDown = (
@@ -900,7 +982,9 @@ export const Connections = () => {
         if (e.button !== 0) return;
         const startX = e.clientX;
         const startY = e.clientY;
+        const source = e.currentTarget as HTMLElement;
         let isDragging = false;
+        let ghost: DragGhost | null = null;
 
         const connectionDropAt = (
             el: Element | null,
@@ -931,7 +1015,11 @@ export const Connections = () => {
                 const dy = ev.clientY - startY;
                 if (dx * dx + dy * dy < 25) return;
                 isDragging = true;
+                ghost = createDragGhost(source, startX, startY);
+                // Only a grouped connection can go back to "Ungrouped".
+                if (currentGroupId) setIsDraggingGroupedConnection(true);
             }
+            ghost?.move(ev.clientX, ev.clientY);
             const el = document.elementFromPoint(ev.clientX, ev.clientY);
             const drop = connectionDropAt(el, ev.clientX, ev.clientY);
             setConnectionDrop((prev) =>
@@ -948,8 +1036,10 @@ export const Connections = () => {
         const onMouseUp = (ev: MouseEvent) => {
             document.removeEventListener('mousemove', onMouseMove);
             document.removeEventListener('mouseup', onMouseUp);
+            ghost?.remove();
             setDragOverGroupId(null);
             setConnectionDrop(null);
+            setIsDraggingGroupedConnection(false);
             if (!isDragging) return;
             const el = document.elementFromPoint(ev.clientX, ev.clientY);
             const drop = connectionDropAt(el, ev.clientX, ev.clientY);
@@ -959,6 +1049,10 @@ export const Connections = () => {
             }
             const groupEl = (el as HTMLElement)?.closest('[data-group-id]') as HTMLElement | null;
             const targetGroupId = groupEl?.dataset.groupId ?? null;
+            if (targetGroupId === UNGROUPED_DROP_ID) {
+                if (currentGroupId) void handleMoveToGroup(connId, null);
+                return;
+            }
             if (!targetGroupId || targetGroupId === currentGroupId) return;
             void handleMoveToGroup(connId, targetGroupId);
         };
@@ -1031,6 +1125,32 @@ export const Connections = () => {
         document.addEventListener('mouseup', onMouseUp);
     };
 
+    const groupMenuItems = (groupId: string): MenuEntry[] => [
+        {
+            label: t('groups.addSubgroup'),
+            icon: FolderPlus,
+            onSelect: () => void handleCreateSubgroup(groupId),
+        },
+        {
+            label: t('groups.rename'),
+            icon: Pencil,
+            onSelect: () => {
+                const group = connectionGroups.find((g) => g.id === groupId);
+                if (group) {
+                    setEditGroupName(group.name);
+                    setEditingGroupId(groupId);
+                }
+            },
+        },
+        'separator',
+        {
+            label: t('groups.delete'),
+            icon: Trash2,
+            danger: true,
+            onSelect: () => void handleDeleteGroup(groupId),
+        },
+    ];
+
     const groupHeaderProps = (group: (typeof sortedGroups)[number]) => ({
         group,
         isCollapsed: collapsedGroups.has(group.id),
@@ -1047,7 +1167,23 @@ export const Connections = () => {
         isDragOver: dragOverGroupId === group.id,
         dropPosition: groupDrop?.id === group.id ? groupDrop.position : null,
         onCreateSubgroup: startInlineSubgroupInput,
+        menuItems: () => groupMenuItems(group.id),
     });
+
+    const renderConnections = (conns: SavedConnection[], mode: 'grid' | 'list') =>
+        mode === 'grid' ? (
+            <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2 lg:grid-cols-3">
+                {conns.map((conn) => (
+                    <ConnectionCard key={conn.id} {...connCardProps(conn)} />
+                ))}
+            </div>
+        ) : (
+            <div className="flex flex-col divide-y divide-default overflow-hidden rounded-lg border border-default">
+                {conns.map((conn) => (
+                    <ConnectionListItem key={conn.id} {...connCardProps(conn)} />
+                ))}
+            </div>
+        );
 
     const renderGroupTree = (
         parentId: string | null,
@@ -1062,14 +1198,14 @@ export const Connections = () => {
             if (search.trim() && !hasAnyMatchingDescendant(group.id, search)) {
                 return null;
             }
-            const indentPx = Math.min(depth, 6) * 16;
+            const indentPx = Math.min(depth, 6) * 20;
             const connCount = countDescendantConnections(group.id);
             return (
                 <div
                     key={group.id}
                     data-group-id={group.id}
                     data-group-depth={depth}
-                    className={mode === 'grid' ? 'space-y-3' : 'space-y-2'}
+                    className="flex flex-col gap-1.5"
                 >
                     <GroupHeader {...groupHeaderProps(group)} connCount={connCount} depth={depth} />
                     {subgroupInputFor === group.id && (
@@ -1118,24 +1254,19 @@ export const Connections = () => {
                             </button>
                         </div>
                     )}
-                    {!isCollapsed && (
-                        <div
-                            className={
-                                mode === 'grid'
-                                    ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3'
-                                    : 'flex flex-col gap-1.5'
-                            }
-                            style={{paddingLeft: 24 + indentPx + (depth + 1) * 20}}
-                        >
-                            {groupConns.map((conn) =>
-                                mode === 'grid' ? (
-                                    <ConnectionCard key={conn.id} {...connCardProps(conn)} />
-                                ) : (
-                                    <ConnectionListItem key={conn.id} {...connCardProps(conn)} />
-                                ),
-                            )}
-                        </div>
-                    )}
+                    {!isCollapsed &&
+                        (groupConns.length > 0 ? (
+                            <div style={{paddingLeft: indentPx}}>
+                                {renderConnections(groupConns, mode)}
+                            </div>
+                        ) : (
+                            !search.trim() &&
+                            !groupsByParent.get(group.id)?.length && (
+                                <div style={{paddingLeft: indentPx}}>
+                                    <GroupDropZone isDragOver={dragOverGroupId === group.id} />
+                                </div>
+                            )
+                        ))}
                     {!isCollapsed && renderGroupTree(group.id, mode, depth + 1)}
                 </div>
             );
@@ -1176,118 +1307,24 @@ export const Connections = () => {
     };
 
     return (
-        <div className="h-full flex flex-col overflow-hidden bg-base">
-            {/* ── Header ────────────────────────────────────────────────────────── */}
-            <div className="relative flex items-center justify-between px-8 pt-7 pb-6 border-b border-default bg-elevated shrink-0 overflow-hidden">
-                {/* Decorative gradients */}
-                <div className="absolute top-0 right-0 w-72 h-full bg-gradient-to-bl from-accent-primary/10 via-accent-primary/3 to-transparent pointer-events-none" />
-                <div className="absolute top-0 right-0 w-32 h-full bg-gradient-to-l from-accent-primary/6 to-transparent pointer-events-none" />
-
-                <div className="relative">
-                    <div className="flex items-center gap-1.5 mb-2">
-                        <Database size={12} className="text-accent" />
-                        <span className="text-[10px] font-bold text-accent/80 uppercase tracking-[0.15em]">
-                            Database Manager
-                        </span>
-                    </div>
-                    <h1 className="text-xl font-bold text-primary tracking-tight">
-                        {t('connections.title')}
-                    </h1>
-                    <div className="flex items-center gap-3 mt-1.5">
-                        <span className="text-xs text-muted">
-                            {connections.length === 0
-                                ? t('connections.noConnections')
-                                : t('connections.connectionCount', {
-                                      count: connections.length,
-                                  })}
-                        </span>
-                        {openCount > 0 && (
-                            <>
-                                <span className="w-1 h-1 rounded-full bg-default" />
-                                <span className="flex items-center gap-1.5 text-xs text-accent-success">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-accent-success animate-pulse" />
-                                    {openCount} active
-                                </span>
-                            </>
-                        )}
-                    </div>
-                </div>
-
-                <div className="relative flex items-stretch shadow-lg shadow-accent-primary/20 rounded-xl">
-                    <button
-                        onClick={() => {
-                            setEditingConnection(null);
-                            setIsModalOpen(true);
-                        }}
-                        className="flex items-center gap-2 bg-accent-primary hover:bg-accent-primary/90 text-inverse pl-4 pr-3.5 py-2.5 rounded-l-xl font-semibold text-sm transition-colors duration-150"
-                    >
-                        <Plus size={15} />
-                        {t('connections.addConnection')}
-                    </button>
-                    <button
-                        ref={importMenuBtnRef}
-                        onClick={toggleImportMenu}
-                        className="flex items-center bg-accent-primary hover:bg-accent-primary/90 text-inverse px-2 rounded-r-xl border-l border-inverse/20 transition-colors duration-150"
-                        title={t('connections.addConnection')}
-                        aria-haspopup="menu"
-                        aria-expanded={isImportMenuOpen}
-                    >
-                        <ChevronDown
-                            size={15}
-                            className={clsx(
-                                'transition-transform',
-                                isImportMenuOpen && 'rotate-180',
-                            )}
-                        />
-                    </button>
-                    {isImportMenuOpen &&
-                        createPortal(
-                            <>
-                                <div
-                                    role="presentation"
-                                    className="fixed inset-0 z-[200]"
-                                    onClick={closeImportMenu}
-                                />
-                                <div
-                                    style={{top: importMenuPos.top, right: importMenuPos.right}}
-                                    className="fixed z-[201] w-60 bg-elevated border border-strong rounded-xl shadow-2xl py-1 overflow-hidden"
-                                >
-                                    <button
-                                        onClick={() => void handleCreateSqliteDatabase()}
-                                        disabled={isCreatingSqliteDatabase}
-                                        className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-secondary hover:text-primary hover:bg-surface-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-left"
-                                    >
-                                        {isCreatingSqliteDatabase ? (
-                                            <Loader2
-                                                size={15}
-                                                className="shrink-0 text-accent animate-spin"
-                                            />
-                                        ) : (
-                                            <Database size={15} className="shrink-0 text-accent" />
-                                        )}
-                                        <span className="flex-1">
-                                            {t('connections.newSqliteDatabase.menuLabel')}
-                                        </span>
-                                    </button>
-                                    <div className="h-px bg-default mx-2" />
-                                    <button
-                                        onClick={() => {
-                                            setIsImportMenuOpen(false);
-                                            setIsImportAppModalOpen(true);
-                                        }}
-                                        className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-secondary hover:text-primary hover:bg-surface-secondary transition-colors text-left"
-                                    >
-                                        <FolderInput size={15} className="shrink-0 text-accent" />
-                                        <span className="flex-1">
-                                            {t('connections.importFromApp.menuLabel')}
-                                        </span>
-                                        <BetaBadge />
-                                    </button>
-                                </div>
-                            </>,
-                            document.body,
-                        )}
-                </div>
+        <div className="relative h-full flex flex-col overflow-hidden bg-base">
+            <div className="flex shrink-0 flex-col gap-6 px-6 pt-6">
+                <ConnectionsHeader
+                    connectionCount={connections.length}
+                    openCount={openCount}
+                    onAddConnection={() => {
+                        setEditingConnection(null);
+                        setIsModalOpen(true);
+                    }}
+                    onCreateSqlite={() => void handleCreateSqliteDatabase()}
+                    isCreatingSqlite={isCreatingSqliteDatabase}
+                    onImport={() => setIsImportAppModalOpen(true)}
+                    onExport={() => {
+                        setExportSelectionOnly(false);
+                        setIsExportModalOpen(true);
+                    }}
+                />
+                <div aria-hidden="true" className="h-px bg-default" />
             </div>
 
             {/* ── Error banner ──────────────────────────────────────────────────── */}
@@ -1308,313 +1345,115 @@ export const Connections = () => {
                 />
             )}
 
-            {/* ── Selection bar (bulk actions) ──────────────────────────────────── */}
-            {selectedIds.size > 0 && (
-                <div className="flex items-center gap-2.5 px-6 py-2.5 bg-elevated border-b border-accent-primary/40 shadow-sm shrink-0">
-                    <span className="text-sm font-semibold text-accent">
-                        {t('connections.selectedCount', {count: selectedIds.size})}
-                    </span>
-                    <div className="flex-1" />
-                    <button
-                        onClick={() => {
-                            setExportSelectionOnly(true);
-                            setIsExportModalOpen(true);
-                        }}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-base border border-strong text-sm text-secondary hover:text-accent hover:border-accent-primary/50 transition-colors"
-                    >
-                        <Download size={14} />
-                        {t('connections.exportSelected')}
-                    </button>
-                    <button
-                        onClick={(e) => {
-                            const r = e.currentTarget.getBoundingClientRect();
-                            setBulkMoveMenu({x: r.left, y: r.bottom + 4});
-                        }}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-base border border-strong text-sm text-secondary hover:text-accent-warning hover:border-accent-warning/50 transition-colors"
-                    >
-                        <FolderInput size={14} />
-                        {t('connections.moveSelected')}
-                    </button>
-                    <button
-                        onClick={handleBulkDelete}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent-error/10 border border-accent-error/30 text-sm text-accent-error hover:bg-accent-error/20 transition-colors"
-                    >
-                        <Trash2 size={14} />
-                        {t('connections.deleteSelected')}
-                    </button>
-                    <button
-                        onClick={clearSelection}
-                        className="p-1.5 rounded-lg text-muted hover:text-primary hover:bg-surface-secondary transition-colors"
-                        title={t('connections.deselectAll')}
-                    >
-                        <X size={14} />
-                    </button>
-                </div>
-            )}
-
             {/* ── Content ───────────────────────────────────────────────────────── */}
-            <div className="flex-1 overflow-y-auto px-6 py-5">
+            <div
+                className={clsx(
+                    'flex-1 overflow-y-auto p-6',
+                    // Room for the floating selection bar over the last row.
+                    selectedIds.size > 0 && 'pb-24',
+                )}
+            >
                 {connections.length === 0 ? (
-                    /* Empty state */
-                    <div className="flex flex-col items-center justify-center h-full min-h-[300px] text-center">
-                        <div className="relative mb-6">
-                            <div className="w-20 h-20 rounded-2xl bg-elevated border border-default flex items-center justify-center shadow-sm">
-                                <Database size={32} className="text-muted" />
-                            </div>
-                            <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-lg bg-accent-primary flex items-center justify-center shadow-lg">
-                                <Plus size={14} className="text-inverse" />
-                            </div>
-                        </div>
-                        <p className="text-base font-bold text-primary mb-1.5">
-                            {t('connections.noConnections')}
-                        </p>
-                        <p className="text-sm text-muted mb-6 max-w-xs leading-relaxed">
-                            {t('connections.noConnectionsHint')}
-                        </p>
-                        <div className="flex flex-wrap items-center justify-center gap-2.5">
-                            <button
-                                onClick={() => {
-                                    setEditingConnection(null);
-                                    setIsModalOpen(true);
-                                }}
-                                className="flex items-center gap-2 bg-accent-primary hover:bg-accent-primary/90 text-inverse px-4 py-2.5 rounded-xl font-semibold text-sm transition-all shadow-lg shadow-accent-primary/20 hover:-translate-y-px"
-                            >
-                                <Plus size={14} />
-                                {t('connections.createFirst')}
-                            </button>
-                            <button
-                                onClick={() => void handleCreateSqliteDatabase()}
-                                disabled={isCreatingSqliteDatabase}
-                                className="flex items-center gap-2 bg-elevated border border-strong hover:border-accent-primary/50 text-secondary hover:text-accent disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2.5 rounded-xl font-semibold text-sm transition-all hover:-translate-y-px"
-                            >
-                                {isCreatingSqliteDatabase ? (
-                                    <Loader2 size={14} className="animate-spin" />
-                                ) : (
-                                    <Database size={14} />
-                                )}
-                                {t('connections.newSqliteDatabase.menuLabel')}
-                            </button>
-                            <button
-                                onClick={() => setIsImportAppModalOpen(true)}
-                                className="flex items-center gap-2 bg-elevated border border-strong hover:border-accent-primary/50 text-secondary hover:text-accent px-4 py-2.5 rounded-xl font-semibold text-sm transition-all hover:-translate-y-px"
-                            >
-                                <FolderInput size={14} />
-                                {t('connections.importFromApp.menuLabel')}
-                                <BetaBadge />
-                            </button>
-                        </div>
-                    </div>
+                    <ConnectionsEmptyState
+                        onAddConnection={() => {
+                            setEditingConnection(null);
+                            setIsModalOpen(true);
+                        }}
+                        onImport={() => setIsImportAppModalOpen(true)}
+                        onCreateSqlite={() => void handleCreateSqliteDatabase()}
+                        isCreatingSqlite={isCreatingSqliteDatabase}
+                    />
                 ) : (
                     <>
-                        {/* ── Toolbar: search + new group + view toggle ─────────────────── */}
-                        <div className="flex items-center gap-3 mb-5">
-                            <div className="relative flex-1">
-                                <Search
-                                    size={14}
-                                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted pointer-events-none"
+                        <ConnectionsToolbar
+                            search={search}
+                            onSearchChange={setSearch}
+                            newGroupName={isCreatingGroup ? newGroupName : null}
+                            onNewGroupNameChange={(name) => {
+                                setIsCreatingGroup(name !== null);
+                                setNewGroupName(name ?? '');
+                            }}
+                            onCreateGroup={() => void handleCreateGroup()}
+                            viewMode={viewMode}
+                            onViewModeChange={setViewMode}
+                        />
+                        <div className="mt-6">
+                            {hasNoSearchResults ? (
+                                <ConnectionsNoResults
+                                    query={search.trim()}
+                                    onClearSearch={() => setSearch('')}
                                 />
-                                <input
-                                    autoCorrect="off"
-                                    autoCapitalize="off"
-                                    autoComplete="off"
-                                    spellCheck={false}
-                                    type="text"
-                                    value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
-                                    placeholder={t('connections.searchPlaceholder')}
-                                    className="w-full pl-10 pr-9 py-2.5 bg-elevated border border-strong rounded-xl text-sm text-primary placeholder:text-muted focus:border-focus/70 focus:outline-none transition-colors"
-                                />
-                                {search && (
-                                    <button
-                                        onClick={() => setSearch('')}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-primary transition-colors"
-                                    >
-                                        <X size={13} />
-                                    </button>
-                                )}
-                            </div>
-
-                            {/* New Group button or input */}
-                            {isCreatingGroup ? (
-                                <div className="flex items-center gap-2 shrink-0">
-                                    <input
-                                        autoCorrect="off"
-                                        autoCapitalize="off"
-                                        autoComplete="off"
-                                        spellCheck={false}
-                                        type="text"
-                                        value={newGroupName}
-                                        onChange={(e) => setNewGroupName(e.target.value)}
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter') void handleCreateGroup();
-                                            if (e.key === 'Escape') {
-                                                setIsCreatingGroup(false);
-                                                setNewGroupName('');
-                                            }
-                                        }}
-                                        placeholder={t('groups.groupName', {
-                                            defaultValue: 'Group name (use / for nested)',
-                                        })}
-                                        autoFocus
-                                        className="w-40 px-3 py-2 bg-elevated border border-strong rounded-xl text-sm text-primary placeholder:text-muted focus:border-accent-warning/70 focus:outline-none transition-colors"
-                                    />
-                                    <button
-                                        onClick={() => void handleCreateGroup()}
-                                        disabled={!newGroupName.trim()}
-                                        className="p-2 rounded-lg bg-accent-warning hover:bg-accent-warning/90 text-on-accent-warning disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                    >
-                                        <Plus size={14} />
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            setIsCreatingGroup(false);
-                                            setNewGroupName('');
-                                        }}
-                                        className="p-2 rounded-lg text-muted hover:text-primary hover:bg-surface-secondary transition-colors"
-                                    >
-                                        <X size={14} />
-                                    </button>
-                                </div>
                             ) : (
-                                <button
-                                    onClick={() => setIsCreatingGroup(true)}
-                                    className="flex items-center gap-1.5 px-3 py-2 bg-elevated border border-strong rounded-xl text-sm text-muted hover:text-accent-warning hover:border-accent-warning/50 transition-colors shrink-0"
-                                    title={t('groups.newGroup')}
-                                >
-                                    <FolderPlus size={14} />
-                                    <span className="hidden sm:inline">{t('groups.newGroup')}</span>
-                                </button>
+                                <div className="flex flex-col gap-3">
+                                    {renderGroupTree(null, viewMode)}
+
+                                    {(filteredUngroupedConnections.length > 0 ||
+                                        isDraggingGroupedConnection) && (
+                                        <div
+                                            data-group-id={UNGROUPED_DROP_ID}
+                                            className="flex flex-col gap-1.5"
+                                        >
+                                            {sortedGroups.length > 0 && (
+                                                <UngroupedHeader
+                                                    count={filteredUngroupedConnections.length}
+                                                    isCollapsed={isUngroupedCollapsed}
+                                                    onToggle={() =>
+                                                        setIsUngroupedCollapsed((v) => !v)
+                                                    }
+                                                />
+                                            )}
+                                            {!(sortedGroups.length > 0 && isUngroupedCollapsed) &&
+                                                (filteredUngroupedConnections.length > 0 ? (
+                                                    renderConnections(
+                                                        filteredUngroupedConnections,
+                                                        viewMode,
+                                                    )
+                                                ) : (
+                                                    <GroupDropZone
+                                                        isDragOver={
+                                                            dragOverGroupId === UNGROUPED_DROP_ID
+                                                        }
+                                                    />
+                                                ))}
+                                        </div>
+                                    )}
+                                </div>
                             )}
-
-                            {/* Export button (import lives in the New Connection dropup) */}
-                            <div className="flex items-center gap-1.5 px-1 py-1 bg-elevated border border-strong rounded-xl shrink-0">
-                                <button
-                                    onClick={() => {
-                                        setExportSelectionOnly(false);
-                                        setIsExportModalOpen(true);
-                                    }}
-                                    className="p-1.5 rounded-lg text-muted hover:text-accent hover:bg-accent-primary/10 transition-all duration-150"
-                                    title={t('connections.export')}
-                                >
-                                    <Download size={14} />
-                                </button>
-                            </div>
-
-                            {/* View toggle */}
-                            <div className="flex items-center gap-0.5 bg-elevated border border-strong rounded-xl p-1 shrink-0">
-                                <button
-                                    onClick={() => setViewMode('grid')}
-                                    className={clsx(
-                                        'p-1.5 rounded-lg transition-all duration-150',
-                                        viewMode === 'grid'
-                                            ? 'bg-accent-primary/15 text-accent shadow-sm'
-                                            : 'text-muted hover:text-secondary hover:bg-surface-secondary',
-                                    )}
-                                    title={t('connections.gridView')}
-                                >
-                                    <LayoutGrid size={15} />
-                                </button>
-                                <button
-                                    onClick={() => setViewMode('list')}
-                                    className={clsx(
-                                        'p-1.5 rounded-lg transition-all duration-150',
-                                        viewMode === 'list'
-                                            ? 'bg-accent-primary/15 text-accent shadow-sm'
-                                            : 'text-muted hover:text-secondary hover:bg-surface-secondary',
-                                    )}
-                                    title={t('connections.listView')}
-                                >
-                                    <List size={15} />
-                                </button>
-                            </div>
                         </div>
-
-                        {/* ── Grid view ─────────────────────────────────────────────── */}
-                        {viewMode === 'grid' ? (
-                            <div className="space-y-6">
-                                {renderGroupTree(null, 'grid')}
-
-                                {filteredUngroupedConnections.length > 0 && (
-                                    <div className="space-y-3">
-                                        {sortedGroups.length > 0 && (
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-sm font-semibold text-muted">
-                                                    {t('groups.ungrouped')}
-                                                </span>
-                                                <span className="text-xs text-muted">
-                                                    ({filteredUngroupedConnections.length})
-                                                </span>
-                                            </div>
-                                        )}
-                                        <div
-                                            className={clsx(
-                                                'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3',
-                                                sortedGroups.length > 0 && 'pl-6',
-                                            )}
-                                        >
-                                            {filteredUngroupedConnections.map((conn) => (
-                                                <ConnectionCard
-                                                    key={conn.id}
-                                                    {...connCardProps(conn)}
-                                                />
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {Object.keys(filteredGroupedConnections).length === 0 &&
-                                    filteredUngroupedConnections.length === 0 &&
-                                    search && (
-                                        <div className="text-center py-12 text-sm text-muted">
-                                            {t('connections.noSearchResults', {query: search})}
-                                        </div>
-                                    )}
-                            </div>
-                        ) : (
-                            /* ── List view ──────────────────────────────────────────────── */
-                            <div className="space-y-6">
-                                {renderGroupTree(null, 'list')}
-
-                                {filteredUngroupedConnections.length > 0 && (
-                                    <div className="space-y-2">
-                                        {sortedGroups.length > 0 && (
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-sm font-semibold text-muted">
-                                                    {t('groups.ungrouped')}
-                                                </span>
-                                                <span className="text-xs text-muted">
-                                                    ({filteredUngroupedConnections.length})
-                                                </span>
-                                            </div>
-                                        )}
-                                        <div
-                                            className={clsx(
-                                                'flex flex-col gap-1.5',
-                                                sortedGroups.length > 0 && 'pl-6',
-                                            )}
-                                        >
-                                            {filteredUngroupedConnections.map((conn) => (
-                                                <ConnectionListItem
-                                                    key={conn.id}
-                                                    {...connCardProps(conn)}
-                                                />
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {Object.keys(filteredGroupedConnections).length === 0 &&
-                                    filteredUngroupedConnections.length === 0 &&
-                                    search && (
-                                        <div className="text-center py-12 text-sm text-muted">
-                                            {t('connections.noSearchResults', {query: search})}
-                                        </div>
-                                    )}
-                            </div>
-                        )}
                     </>
                 )}
             </div>
+
+            {selectedIds.size > 0 && (
+                <ConnectionsSelectionBar
+                    selectedCount={selectedIds.size}
+                    onSelectAll={
+                        visibleConnectionIds.every((id) => selectedIds.has(id))
+                            ? undefined
+                            : () => setSelectedIds(new Set(visibleConnectionIds))
+                    }
+                    moveTargets={() => [
+                        {
+                            label: t('groups.ungrouped'),
+                            icon: FolderMinus,
+                            onSelect: () => void handleBulkMoveToGroup(null),
+                        },
+                        ...(connectionGroups.length > 0 ? ['separator' as const] : []),
+                        ...flattenGroupTree(connectionGroups).map(({group, depth}) => ({
+                            label: group.name,
+                            icon: Folder,
+                            indent: depth,
+                            onSelect: () => void handleBulkMoveToGroup(group.id),
+                        })),
+                    ]}
+                    onExport={() => {
+                        setExportSelectionOnly(true);
+                        setIsExportModalOpen(true);
+                    }}
+                    onDelete={handleBulkDelete}
+                    onClear={clearSelection}
+                />
+            )}
 
             <Suspense fallback={<LoadingState />}>
                 {isModalOpen && (
@@ -1678,155 +1517,32 @@ export const Connections = () => {
                 }}
             />
 
-            {/* Group context menu */}
+            {/* Group right-click menu (the header's "…" button opens the same entries) */}
             {groupContextMenu && (
-                <ContextMenu
+                <Menu
                     x={groupContextMenu.x}
                     y={groupContextMenu.y}
-                    items={[
-                        {
-                            label: t('groups.newSubfolder', {defaultValue: 'New subfolder'}),
-                            icon: FolderPlus,
-                            action: () => {
-                                void handleCreateSubgroup(groupContextMenu.groupId);
-                            },
-                        },
-                        {separator: true as const},
-                        {
-                            label: t('groups.rename'),
-                            icon: Edit,
-                            action: () => {
-                                const group = connectionGroups.find(
-                                    (g) => g.id === groupContextMenu.groupId,
-                                );
-                                if (group) {
-                                    setEditGroupName(group.name);
-                                    setEditingGroupId(groupContextMenu.groupId);
-                                }
-                            },
-                        },
-                        {separator: true as const},
-                        {
-                            label: t('groups.delete'),
-                            icon: Trash2,
-                            action: () => handleDeleteGroup(groupContextMenu.groupId),
-                            danger: true,
-                        },
-                    ]}
+                    items={groupMenuItems(groupContextMenu.groupId)}
                     onClose={() => setGroupContextMenu(null)}
                 />
             )}
 
-            {/* Connection context menu for moving to groups */}
+            {/* Connection right-click menu (the card's "…" button opens the same entries) */}
             {connectionContextMenu &&
                 (() => {
                     const conn = connections.find((c) => c.id === connectionContextMenu.connId);
-                    const currentGroupId = conn?.group_id;
-                    const isInGroup = !!currentGroupId;
-                    // Flatten the group tree in DFS order so the menu mirrors the
-                    // nested sidebar structure. The group the connection already
-                    // lives in is skipped, but its descendants remain valid targets.
-                    const groupTree = flattenGroupTree(connectionGroups).filter(
-                        ({group}) => group.id !== currentGroupId,
-                    );
-                    const hasAvailableGroups = groupTree.length > 0;
+                    if (!conn) return null;
                     return (
-                        <ContextMenu
+                        <Menu
                             x={connectionContextMenu.x}
                             y={connectionContextMenu.y}
-                            items={[
-                                {
-                                    label: t('sidebar.openInNewWindow'),
-                                    icon: AppWindow,
-                                    disabled: !hasLocalOpenConnections,
-                                    action: () => {
-                                        if (conn) void handleOpenInNewWindow(conn);
-                                    },
-                                },
-                                // Bidirectional "Switch to plugin" / "Switch back to builtin"
-                                // per-connection action. Direction is driven by the current
-                                // driver — always available, even after the banner is
-                                // dismissed. Uses the same confirm flow as the card button.
-                                ...(() => {
-                                    if (!conn) return [];
-                                    const direction = migrationDirectionForDriver(
-                                        conn.params.driver,
-                                        allDrivers,
-                                    );
-                                    if (!direction) return [];
-                                    return [
-                                        {separator: true as const},
-                                        {
-                                            label:
-                                                direction === 'to-plugin'
-                                                    ? t('migration.switchToPlugin')
-                                                    : t('migration.switchToBuiltin'),
-                                            icon: ArrowLeftRight,
-                                            action: () => handleMigrate(conn, direction),
-                                        },
-                                    ];
-                                })(),
-                                ...(hasAvailableGroups
-                                    ? [
-                                          {separator: true as const},
-                                          {
-                                              label: t('groups.moveToGroup'),
-                                              icon: FolderTree,
-                                              submenu: groupTree.map(({group, depth}) => ({
-                                                  label: group.name,
-                                                  icon: Folder,
-                                                  indent: depth,
-                                                  action: () =>
-                                                      void handleMoveToGroup(
-                                                          connectionContextMenu.connId,
-                                                          group.id,
-                                                      ),
-                                              })),
-                                          },
-                                      ]
-                                    : []),
-                                ...(isInGroup
-                                    ? [
-                                          {separator: true as const},
-                                          {
-                                              label: t('groups.removeFromGroup'),
-                                              icon: X,
-                                              action: () =>
-                                                  void handleMoveToGroup(
-                                                      connectionContextMenu.connId,
-                                                      null,
-                                                  ),
-                                          },
-                                      ]
-                                    : []),
-                            ]}
+                            items={connectionMenuItems(conn)}
                             onClose={() => setConnectionContextMenu(null)}
                         />
                     );
                 })()}
 
             {/* Bulk "move selected to group" menu */}
-            {bulkMoveMenu && (
-                <ContextMenu
-                    x={bulkMoveMenu.x}
-                    y={bulkMoveMenu.y}
-                    items={[
-                        {
-                            label: t('groups.ungrouped'),
-                            icon: X,
-                            action: () => void handleBulkMoveToGroup(null),
-                        },
-                        ...(connectionGroups.length > 0 ? [{separator: true as const}] : []),
-                        ...flattenGroupTree(connectionGroups).map(({group, depth}) => ({
-                            label: group.name,
-                            icon: Folder,
-                            indent: depth,
-                            action: () => void handleBulkMoveToGroup(group.id),
-                        })),
-                    ]}
-                    onClose={() => setBulkMoveMenu(null)}
-                />
-            )}
         </div>
     );
 };

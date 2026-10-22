@@ -181,7 +181,7 @@ describe('Connections SQLite database action', () => {
     it('creates, refreshes, and opens a database from the empty state', async () => {
         render(<Connections />);
 
-        fireEvent.click(screen.getByText('connections.newSqliteDatabase.menuLabel'));
+        fireEvent.click(screen.getByText('connections.empty.createSqlite'));
 
         await waitFor(() => {
             expect(mocks.createSqliteDatabase).toHaveBeenCalledTimes(1);
@@ -192,18 +192,19 @@ describe('Connections SQLite database action', () => {
     });
 
     it('also exposes the action in the add-connection menu', () => {
+        mocks.connections = [sqliteConnection];
         render(<Connections />);
 
-        fireEvent.click(screen.getByTitle('connections.addConnection'));
+        fireEvent.click(screen.getByTitle('connections.moreAddOptions'));
 
-        expect(screen.getAllByText('connections.newSqliteDatabase.menuLabel')).toHaveLength(2);
+        expect(screen.getByText('connections.newSqliteDatabase.menuLabel')).toBeInTheDocument();
     });
 
     it('shows a creation error without attempting to connect', async () => {
         mocks.createSqliteDatabase.mockRejectedValue(new Error('permission denied'));
         render(<Connections />);
 
-        fireEvent.click(screen.getByText('connections.newSqliteDatabase.menuLabel'));
+        fireEvent.click(screen.getByText('connections.empty.createSqlite'));
 
         expect(await screen.findByText('connections.newSqliteDatabase.error')).toBeInTheDocument();
         expect(mocks.connect).not.toHaveBeenCalled();
@@ -304,7 +305,8 @@ describe('Connections delete', () => {
         });
         render(<Connections />);
 
-        fireEvent.click(screen.getAllByTitle('connections.delete')[0]);
+        fireEvent.click(screen.getAllByTitle('common.moreActions')[0]);
+        fireEvent.click(screen.getByText('connections.delete'));
         fireEvent.click(screen.getByText('confirm-modal-confirm'));
 
         expect(await screen.findByText(/connections\.failDelete/)).toBeInTheDocument();

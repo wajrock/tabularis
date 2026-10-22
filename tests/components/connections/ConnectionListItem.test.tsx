@@ -17,7 +17,6 @@ vi.mock('@/hooks/useDatabase', () => ({
         isConnectionOpenAnywhere: (id: string) => id === 'one',
     }),
 }));
-vi.mock('@/components/connections/ActionButtons', () => ({ActionButtons: () => null}));
 
 const plugin: RegistryPluginWithStatus = {
     id: 'postgresql',
@@ -61,17 +60,15 @@ const props: ConnectionListItemProps = {
     allDrivers: [driver],
     enabledDrivers: [],
     onConnect: vi.fn(),
-    onDisconnect: vi.fn(),
     onEdit: vi.fn(),
-    onDuplicate: vi.fn(),
-    onDelete: vi.fn(),
+    onOpenMenu: vi.fn(),
     onContextMenu: vi.fn(),
     onMouseDown: vi.fn(),
 };
 
-/** Every chip goes through the shared primitive: a bordered, semibold span. */
+/** Attribute chips are 20 px spans; the update pill keeps the bordered chip. */
 const chipTexts = (root: HTMLElement) =>
-    Array.from(root.querySelectorAll('span.border.font-semibold')).map(
+    Array.from(root.querySelectorAll('span.h-5, span.border.font-semibold')).map(
         (element) => element.textContent,
     );
 
@@ -102,11 +99,10 @@ describe('ConnectionListItem', () => {
         const list = chipTexts(screen.getByTestId('list'));
         expect(list).toEqual(grid);
         expect(list).toEqual([
-            'connections.active',
-            'postgresql',
+            'PostgreSQL',
             'connections.deprecated',
             'v2.0.0',
-            'environment.short.production',
+            'environment.production',
             'billing',
             'SSH',
             'K8s',
@@ -114,8 +110,7 @@ describe('ConnectionListItem', () => {
         ]);
         const links = screen.getAllByRole('link', {name: 'update.badges.driverUpdate'});
         expect(links).toHaveLength(2);
-        for (const link of links)
-            expect(link).toHaveAttribute('href', '/settings?tab=plugins&filter=updates');
+        for (const link of links) expect(link).toHaveAttribute('href', '/plugins?filter=updates');
     });
 
     it('uses the shared state classes for the active row', () => {
@@ -125,7 +120,6 @@ describe('ConnectionListItem', () => {
             </MemoryRouter>,
         );
         const row = screen.getByText('Production').closest('.group');
-        expect(row).toHaveClass('border-accent-primary/40', 'ring-accent-primary/70');
-        expect(screen.getByRole('button', {pressed: true})).toHaveClass('bg-accent-primary');
+        expect(row).toHaveClass('bg-tint-accent-bg/60');
     });
 });

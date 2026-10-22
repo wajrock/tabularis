@@ -10,7 +10,6 @@ vi.mock('@/hooks/usePluginRegistry', () => ({usePluginRegistry: vi.fn()}));
 vi.mock('@/hooks/useDatabase', () => ({
     useDatabase: () => ({activeConnectionId: null, isConnectionOpenAnywhere: () => false}),
 }));
-vi.mock('@/components/connections/ActionButtons', () => ({ActionButtons: () => null}));
 
 const plugin: RegistryPluginWithStatus = {
     id: 'postgresql',
@@ -46,10 +45,8 @@ const props: ConnectionCardProps = {
     allDrivers: [driver],
     enabledDrivers: [driver],
     onConnect: vi.fn(),
-    onDisconnect: vi.fn(),
     onEdit: vi.fn(),
-    onDuplicate: vi.fn(),
-    onDelete: vi.fn(),
+    onOpenMenu: vi.fn(),
     onContextMenu: vi.fn(),
     onMouseDown: vi.fn(),
 };
@@ -70,7 +67,7 @@ function Cards() {
                         </>
                     }
                 />
-                <Route path="/settings" element={<div>Plugin settings</div>} />
+                <Route path="/plugins" element={<div>Plugin center</div>} />
             </Routes>
         </MemoryRouter>
     );
@@ -93,7 +90,7 @@ describe('ConnectionCard driver updates', () => {
         const links = screen.getAllByRole('link', {name: 'update.badges.driverUpdate'});
         expect(links).toHaveLength(2);
         for (const link of links) {
-            expect(link).toHaveAttribute('href', '/settings?tab=plugins&filter=updates');
+            expect(link).toHaveAttribute('href', '/plugins?filter=updates');
             expect(link.textContent).toBe('v2.0.0');
             const pill = link.firstElementChild as HTMLElement;
             expect(pill).toHaveClass('rounded-full');
@@ -116,7 +113,7 @@ describe('ConnectionCard driver updates', () => {
         expect(props.onConnect).not.toHaveBeenCalled();
         expect(props.onContextMenu).not.toHaveBeenCalled();
         fireEvent.click(link);
-        expect(screen.getByText('Plugin settings')).toBeInTheDocument();
+        expect(screen.getByText('Plugin center')).toBeInTheDocument();
         expect(props.onConnect).not.toHaveBeenCalled();
     });
 
@@ -136,13 +133,15 @@ describe('ConnectionCard driver updates', () => {
             </MemoryRouter>,
         );
         const root = container.querySelector('.group');
-        expect(root).toHaveClass('ring-2');
-        expect(container.querySelector('.w-11.h-11')).toHaveStyle({backgroundColor: '#ff0000'});
+        expect(root).toHaveClass('outline-accent-primary');
+        expect(container.querySelector('.h-8.w-8')).toHaveStyle({backgroundColor: '#ff0000'});
         expect(screen.getByText('💉')).toBeInTheDocument();
-        const checkbox = screen.getByRole('button', {pressed: true});
-        fireEvent.doubleClick(checkbox);
-        fireEvent.click(checkbox);
-        expect(toggle).toHaveBeenCalledOnce();
+        const card = screen.getByRole('button', {name: 'Production'});
+        fireEvent.click(card);
+        expect(toggle).not.toHaveBeenCalled();
+        fireEvent.click(card, {metaKey: true});
+        fireEvent.click(card, {ctrlKey: true});
+        expect(toggle).toHaveBeenCalledTimes(2);
         expect(props.onConnect).not.toHaveBeenCalled();
         fireEvent.doubleClick(screen.getByText('Production'));
         expect(props.onConnect).toHaveBeenCalledOnce();

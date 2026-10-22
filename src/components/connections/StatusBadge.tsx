@@ -1,6 +1,6 @@
 import {useTranslation} from 'react-i18next';
+import clsx from 'clsx';
 import {Loader2} from 'lucide-react';
-import {Chip} from '@/components/ui/Chip';
 
 export interface StatusBadgeProps {
     isActive: boolean;
@@ -8,21 +8,27 @@ export interface StatusBadgeProps {
     isConnecting: boolean;
 }
 
-/** Live connection state as a `success` pill: pulsing dot when active, steady when merely open. */
+/** Live connection state: a green dot and label, pulsing for the active connection. */
 export const StatusBadge = ({isActive, isOpen, isConnecting}: StatusBadgeProps) => {
     const {t} = useTranslation();
-    if (isConnecting) return <Loader2 size={13} className="animate-spin text-accent" />;
-    if (isActive)
+    if (isConnecting)
         return (
-            <Chip tone="success" shape="pill" dot="pulse">
-                {t('connections.active')}
-            </Chip>
+            <span className="flex items-center gap-1.5 text-xs font-semibold text-muted">
+                <Loader2 size={12} className="animate-spin" />
+                {t('connections.connecting')}
+            </span>
         );
-    if (isOpen)
-        return (
-            <Chip tone="success" shape="pill" dot="static" className="opacity-80">
-                {t('connections.open')}
-            </Chip>
-        );
-    return null;
+    if (!isActive && !isOpen) return null;
+    return (
+        <span className="flex items-center gap-1.5 text-xs font-semibold text-tint-success-fg">
+            <span
+                aria-hidden="true"
+                className={clsx(
+                    'h-2 w-2 rounded-full bg-status-success',
+                    isActive && 'animate-pulse',
+                )}
+            />
+            {isActive ? t('connections.active') : t('connections.open')}
+        </span>
+    );
 };

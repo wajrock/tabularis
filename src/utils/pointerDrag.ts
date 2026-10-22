@@ -129,3 +129,50 @@ export function startPointerDrag(
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
 }
+
+export interface DragGhost {
+    move: (x: number, y: number) => void;
+    remove: () => void;
+}
+
+/**
+ * Copy of `source` that follows the pointer, keeping the grab offset; the
+ * source is dimmed until `remove()`. The copy ignores the pointer, so
+ * `elementFromPoint` still finds the drop target underneath.
+ */
+export function createDragGhost(source: HTMLElement, grabX: number, grabY: number): DragGhost {
+    const rect = source.getBoundingClientRect();
+    const offsetX = grabX - rect.left;
+    const offsetY = grabY - rect.top;
+    const ghost = source.cloneNode(true) as HTMLElement;
+    ghost.removeAttribute('data-connection-id');
+    ghost.setAttribute('aria-hidden', 'true');
+    Object.assign(ghost.style, {
+        position: 'fixed',
+        left: '0',
+        top: '0',
+        width: `${rect.width}px`,
+        height: `${rect.height}px`,
+        margin: '0',
+        pointerEvents: 'none',
+        zIndex: '300',
+        opacity: '0.95',
+        boxShadow: 'var(--elevation-menu)',
+    });
+    const move = (x: number, y: number) => {
+        ghost.style.transform = `translate(${x - offsetX}px, ${y - offsetY}px)`;
+    };
+    move(grabX, grabY);
+    document.body.appendChild(ghost);
+    const previousOpacity = source.style.opacity;
+    source.style.opacity = '0.4';
+    document.body.style.cursor = 'grabbing';
+    return {
+        move,
+        remove: () => {
+            ghost.remove();
+            source.style.opacity = previousOpacity;
+            document.body.style.cursor = '';
+        },
+    };
+}

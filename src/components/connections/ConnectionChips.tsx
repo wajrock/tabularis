@@ -44,9 +44,12 @@ export const ConnectionChips = ({
 
     return (
         <>
-            <Chip className="capitalize">{conn.params.driver}</Chip>
+            <Chip variant="flat" className={driverManifest ? undefined : 'capitalize'}>
+                {driverManifest?.name ?? conn.params.driver}
+            </Chip>
             {driverManifest?.deprecated && (
                 <Chip
+                    variant="flat"
                     tone="warning"
                     title={
                         driverManifest.deprecated.removal_date
@@ -70,7 +73,7 @@ export const ConnectionChips = ({
                     })}
                 >
                     <Link
-                        to="/settings?tab=plugins&filter=updates"
+                        to="/plugins?filter=updates"
                         aria-label={t('update.badges.driverUpdate')}
                         {...stopCardEvents}
                         className="inline-flex rounded-full focus-visible:outline focus-visible:outline-focus"
@@ -82,22 +85,22 @@ export const ConnectionChips = ({
             <EnvironmentBadge environment={conn.environment} />
             <TagChips tagIds={conn.tag_ids} tags={tags} />
             {conn.params.ssh_enabled && (
-                <Chip tone="success" icon={<Shield size={8} />}>
+                <Chip variant="flat" tone="success" icon={<Shield size={10} />}>
                     SSH
                 </Chip>
             )}
             {conn.params.k8s_enabled && (
-                <Chip tone="primary" icon={<Shield size={8} />}>
+                <Chip variant="flat" tone="primary" icon={<Shield size={10} />}>
                     K8s
                 </Chip>
             )}
             {conn.params.ssm_enabled && (
-                <Chip tone="neutral" icon={<Shield size={8} />}>
+                <Chip variant="flat" icon={<Shield size={10} />}>
                     SSM
                 </Chip>
             )}
             {!isDriverEnabled && (
-                <Chip tone="warning" icon={<PlugZap size={8} />}>
+                <Chip variant="flat" tone="warning" icon={<PlugZap size={10} />}>
                     {t('connections.pluginDisabled')}
                 </Chip>
             )}
