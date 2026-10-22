@@ -86,9 +86,9 @@ const sidebarItemMocks = vi.hoisted(() => ({
     sidebarViewItemProps: [] as Array<Record<string, unknown>>,
 }));
 
-vi.mock('@/components/layout/sidebar/SidebarTableItem', async (importOriginal) => {
+vi.mock('@/components/layout/explorer/SidebarTableItem', async (importOriginal) => {
     const actual =
-        await importOriginal<typeof import('@/components/layout/sidebar/SidebarTableItem')>();
+        await importOriginal<typeof import('@/components/layout/explorer/SidebarTableItem')>();
     return {
         ...actual,
         SidebarTableItem: (props: Record<string, unknown>) => {
@@ -102,9 +102,9 @@ vi.mock('@/components/layout/sidebar/SidebarTableItem', async (importOriginal) =
     };
 });
 
-vi.mock('@/components/layout/sidebar/SidebarViewItem', async (importOriginal) => {
+vi.mock('@/components/layout/explorer/SidebarViewItem', async (importOriginal) => {
     const actual =
-        await importOriginal<typeof import('@/components/layout/sidebar/SidebarViewItem')>();
+        await importOriginal<typeof import('@/components/layout/explorer/SidebarViewItem')>();
     return {
         ...actual,
         SidebarViewItem: (props: Record<string, unknown>) => {

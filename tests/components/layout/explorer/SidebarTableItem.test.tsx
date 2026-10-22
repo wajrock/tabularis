@@ -1,6 +1,6 @@
 import {render, screen, fireEvent, waitFor} from '@testing-library/react';
 import {describe, it, expect, vi, beforeEach} from 'vitest';
-import {SidebarTableItem} from '@/components/layout/sidebar/SidebarTableItem';
+import {SidebarTableItem} from '@/components/layout/explorer/SidebarTableItem';
 import {invoke} from '@tauri-apps/api/core';
 
 // Mock Tauri invoke

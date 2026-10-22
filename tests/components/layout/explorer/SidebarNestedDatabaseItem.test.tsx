@@ -1,6 +1,6 @@
 import {fireEvent, render, screen, waitFor} from '@testing-library/react';
 import {describe, expect, it, vi} from 'vitest';
-import {SidebarNestedDatabaseItem} from '@/components/layout/sidebar/SidebarNestedDatabaseItem';
+import {SidebarNestedDatabaseItem} from '@/components/layout/explorer/SidebarNestedDatabaseItem';
 import type {NestedDatabaseData} from '@/contexts/DatabaseContext';
 
 // The global lucide-react mock (tests/setup.ts) doesn't stub Settings2 (the

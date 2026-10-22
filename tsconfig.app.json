@@ -30,8 +30,7 @@
   "include": [
     "src",
     "tests/setup.ts",
-    "tests/components/layout/sidebar/Accordion.test.tsx",
-    "tests/components/layout/sidebar/NavItem.test.tsx",
+    "tests/components/layout/explorer/Accordion.test.tsx",
     "tests/utils/triggerSql.test.ts"
   ]
 }

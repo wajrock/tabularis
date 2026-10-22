@@ -4,7 +4,7 @@ import {useState} from 'react';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {QueryHistoryProvider} from '@/contexts/QueryHistoryProvider';
 import {useQueryHistory} from '@/hooks/useQueryHistory';
-import {QueryHistorySection} from '@/components/layout/sidebar/QueryHistorySection';
+import {QueryHistorySection} from '@/components/layout/explorer/QueryHistorySection';
 import type {QueryHistoryEntry} from '@/types/queryHistory';
 
 vi.mock('lucide-react', async (importOriginal) => await importOriginal());

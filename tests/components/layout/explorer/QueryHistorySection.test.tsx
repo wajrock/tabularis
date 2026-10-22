@@ -1,7 +1,7 @@
 import {fireEvent, render, screen} from '@testing-library/react';
 import {useState, type ComponentProps} from 'react';
 import {describe, expect, it, vi} from 'vitest';
-import {QueryHistorySection} from '@/components/layout/sidebar/QueryHistorySection';
+import {QueryHistorySection} from '@/components/layout/explorer/QueryHistorySection';
 import type {QueryHistoryEntry} from '@/types/queryHistory';
 
 vi.mock('lucide-react', async (importOriginal) => await importOriginal());

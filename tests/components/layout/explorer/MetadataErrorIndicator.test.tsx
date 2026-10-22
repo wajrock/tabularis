@@ -1,6 +1,6 @@
 import {fireEvent, render, screen, waitFor} from '@testing-library/react';
 import {describe, expect, it, vi} from 'vitest';
-import {MetadataErrorIndicator} from '@/components/layout/sidebar/MetadataErrorIndicator';
+import {MetadataErrorIndicator} from '@/components/layout/explorer/MetadataErrorIndicator';
 
 vi.mock('react-i18next', () => ({
     useTranslation: () => ({t: (key: string) => key}),

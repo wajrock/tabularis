@@ -1,7 +1,7 @@
 import {fireEvent, render, screen, waitFor} from '@testing-library/react';
 import type React from 'react';
 import {describe, expect, it, vi} from 'vitest';
-import {SidebarDatabaseItem} from '@/components/layout/sidebar/SidebarDatabaseItem';
+import {SidebarDatabaseItem} from '@/components/layout/explorer/SidebarDatabaseItem';
 import type {DriverCapabilities} from '@/types/plugins';
 
 vi.mock('react-i18next', () => ({

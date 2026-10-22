@@ -84,21 +84,21 @@ import {ViewEditorModal} from '@/components/modals/ViewEditorModal';
 import {TriggerEditorModal} from '@/components/modals/TriggerEditorModal';
 import {ConfirmModal} from '@/components/modals/ConfirmModal';
 import {RunRoutineModal} from '@/components/modals/RunRoutineModal';
-import {Accordion} from './sidebar/Accordion';
-import {MetadataErrorIndicator} from './sidebar/MetadataErrorIndicator';
-import {SidebarTableItem} from './sidebar/SidebarTableItem';
+import {Accordion} from './explorer/Accordion';
+import {MetadataErrorIndicator} from './explorer/MetadataErrorIndicator';
+import {SidebarTableItem} from './explorer/SidebarTableItem';
 import {buildTableItemSelector} from '@/utils/sidebarTableItem';
 import {fuzzyFilter} from '@/utils/fuzzy';
 import {formatHistoryEntryDetails} from '@/utils/queryHistoryDetails';
-import {SidebarViewItem} from './sidebar/SidebarViewItem';
-import {SidebarRoutineItem} from './sidebar/SidebarRoutineItem';
-import {SidebarRoutineGroupHeader} from './sidebar/SidebarRoutineGroupHeader';
-import {SidebarSchemaItem} from './sidebar/SidebarSchemaItem';
-import {SidebarDatabaseItem} from './sidebar/SidebarDatabaseItem';
-import {SidebarNestedDatabaseItem} from './sidebar/SidebarNestedDatabaseItem';
-import {SidebarTriggerItem} from './sidebar/SidebarTriggerItem';
-import {QueryHistorySection} from './sidebar/QueryHistorySection';
-import {NotebooksSection} from './sidebar/NotebooksSection';
+import {SidebarViewItem} from './explorer/SidebarViewItem';
+import {SidebarRoutineItem} from './explorer/SidebarRoutineItem';
+import {SidebarRoutineGroupHeader} from './explorer/SidebarRoutineGroupHeader';
+import {SidebarSchemaItem} from './explorer/SidebarSchemaItem';
+import {SidebarDatabaseItem} from './explorer/SidebarDatabaseItem';
+import {SidebarNestedDatabaseItem} from './explorer/SidebarNestedDatabaseItem';
+import {SidebarTriggerItem} from './explorer/SidebarTriggerItem';
+import {QueryHistorySection} from './explorer/QueryHistorySection';
+import {NotebooksSection} from './explorer/NotebooksSection';
 import {
     renameNotebook,
     deleteNotebook,
