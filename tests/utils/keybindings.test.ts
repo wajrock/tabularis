@@ -1,5 +1,6 @@
 import {describe, it, expect} from 'vitest';
 import shortcutDefs from '@/config/shortcuts.json';
+import {compactShortcutLabel} from '@/utils/keybindings';
 import {
     resolveMatch,
     matchesEvent,
@@ -629,5 +630,13 @@ describe('formatShortcut', () => {
             },
         };
         expect(formatShortcut(makeDef(), overrides, isMac)).toBe(expected);
+    });
+});
+
+describe('compactShortcutLabel', () => {
+    it('drops the separators and shows Shift as ⇧', () => {
+        expect(compactShortcutLabel('⌘+Shift+N')).toBe('⌘⇧N');
+        expect(compactShortcutLabel('Ctrl+Shift+N')).toBe('Ctrl⇧N');
+        expect(compactShortcutLabel('Ctrl++')).toBe('Ctrl+');
     });
 });

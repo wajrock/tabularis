@@ -3,7 +3,7 @@ import {describe, it, expect, vi, beforeEach} from 'vitest';
 import {
     DiscordCommunityCallout,
     DISCORD_CALLOUT_STORAGE_KEY,
-} from '@/components/layout/sidebar/DiscordCommunityCallout';
+} from '@/components/layout/navigation/DiscordCommunityCallout';
 import {openUrl} from '@tauri-apps/plugin-opener';
 
 const createMemoryStorage = (initial: Record<string, string> = {}) => {

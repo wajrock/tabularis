@@ -13,8 +13,12 @@ vi.mock('@/components/plugins/PluginUpdateToast', () => ({
     PluginUpdateToast: () => null,
 }));
 
-vi.mock('@/components/layout/Sidebar', () => ({
-    Sidebar: () => <aside>Sidebar</aside>,
+vi.mock('@/components/layout/navigation/AppNav', () => ({
+    AppNav: () => <aside>Navigation</aside>,
+}));
+
+vi.mock('@/components/layout/explorer/ExplorerPanel', () => ({
+    ExplorerPanel: () => null,
 }));
 
 vi.mock('@/components/layout/RightSidebar', () => ({

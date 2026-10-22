@@ -294,6 +294,14 @@ function formatKey(key: string | undefined, isMac: boolean): string {
     return key;
 }
 
+/** Compact form of a shortcut label for buttons: "⌘+Shift+N" → "⌘⇧N", "Ctrl+Shift+N" → "Ctrl⇧N". */
+export function compactShortcutLabel(label: string): string {
+    return label
+        .split(/\+(?!$)/)
+        .map((part) => (part === 'Shift' ? '⇧' : part))
+        .join('');
+}
+
 export function formatShortcut(def: ShortcutDef, overrides: UserOverrides, isMac: boolean): string {
     const override = overrides[def.id];
     return override

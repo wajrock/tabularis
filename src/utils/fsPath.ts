@@ -105,3 +105,16 @@ function peelOuterQuotes(raw: string): string {
     }
     return current;
 }
+
+/**
+ * Shortens a path inside the user's home directory to `~/...` for display.
+ * Works with both `/` and `\\` separators; other paths are returned unchanged.
+ */
+export function abbreviateHomePath(path: string, homeDir: string | null | undefined): string {
+    if (!homeDir) return path;
+    const home = homeDir.replace(/[\\/]+$/, '');
+    if (!home) return path;
+    if (path === home) return '~';
+    const rest = path.slice(home.length);
+    return path.startsWith(home) && /^[\\/]/.test(rest) ? `~${rest}` : path;
+}

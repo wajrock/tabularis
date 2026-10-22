@@ -65,7 +65,7 @@ const ALLOWLIST = {
         rules: ['hex', 'palette'],
         reason: 'Discord brand mark',
     },
-    'src/components/layout/sidebar/DiscordCommunityCallout.tsx': {
+    'src/components/layout/navigation/DiscordCommunityCallout.tsx': {
         rules: ['palette', 'white'],
         reason: 'Discord-branded callout',
     },

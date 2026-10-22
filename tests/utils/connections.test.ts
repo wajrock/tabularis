@@ -6,6 +6,7 @@ import {
     getDriverLabel,
     generateConnectionName,
     connectionSubtitle,
+    connectionMeta,
     getCardClass,
     updateExtraField,
     withoutBlankSslMode,
@@ -602,37 +603,6 @@ describe('connections', () => {
         });
     });
 
-    describe('getCardClass', () => {
-        const isOpen = (id: string) => id === 'open-conn';
-
-        it('should return active class when connId matches activeConnectionId', () => {
-            const cls = getCardClass('conn-1', 'conn-1', isOpen);
-            expect(cls).toContain('border-accent-primary/40');
-        });
-
-        it('should return open class when connection is open but not active', () => {
-            const cls = getCardClass('open-conn', 'other', isOpen);
-            expect(cls).toContain('border-accent-success/35');
-        });
-
-        it('should return default class when connection is neither active nor open', () => {
-            const cls = getCardClass('closed-conn', 'other', isOpen);
-            expect(cls).toContain('border-strong');
-        });
-
-        it('should prioritize active over open when both could apply', () => {
-            const isOpenAndActive = (id: string) => id === 'conn-1';
-            const cls = getCardClass('conn-1', 'conn-1', isOpenAndActive);
-            expect(cls).toContain('border-accent-primary/40');
-            expect(cls).not.toContain('border-accent-success/35');
-        });
-
-        it('should return default class when activeConnectionId is null', () => {
-            const cls = getCardClass('conn-1', null, isOpen);
-            expect(cls).toContain('border-strong');
-        });
-    });
-
     describe('generateConnectionName with capabilities', () => {
         it('should extract filename for file_based driver', () => {
             const params: ConnectionParams = {driver: 'custom-db', database: '/home/user/data.db'};
@@ -919,6 +889,73 @@ describe('connections', () => {
 
         it('does nothing when dropped on itself', () => {
             expect(planGroupDrop(groups, 'pg', 'pg', 'before')).toBeNull();
+        });
+    });
+
+    describe('getCardClass', () => {
+        const isOpen = (id: string) => id === 'open-conn';
+
+        it('should return active class when connId matches activeConnectionId', () => {
+            const cls = getCardClass('conn-1', 'conn-1', isOpen);
+            expect(cls).toContain('border-accent-primary/40');
+        });
+
+        it('should return open class when connection is open but not active', () => {
+            const cls = getCardClass('open-conn', 'other', isOpen);
+            expect(cls).toContain('border-accent-success/35');
+        });
+
+        it('should return default class when connection is neither active nor open', () => {
+            const cls = getCardClass('closed-conn', 'other', isOpen);
+            expect(cls).toContain('border-strong');
+        });
+
+        it('should prioritize active over open when both could apply', () => {
+            const isOpenAndActive = (id: string) => id === 'conn-1';
+            const cls = getCardClass('conn-1', 'conn-1', isOpenAndActive);
+            expect(cls).toContain('border-accent-primary/40');
+            expect(cls).not.toContain('border-accent-success/35');
+        });
+
+        it('should return default class when activeConnectionId is null', () => {
+            const cls = getCardClass('conn-1', null, isOpen);
+            expect(cls).toContain('border-strong');
+        });
+    });
+
+    describe('connectionMeta', () => {
+        const makeConn = (overrides: Partial<SavedConnection['params']> = {}): SavedConnection => ({
+            id: '1',
+            name: 'test',
+            params: {
+                driver: 'postgres',
+                host: 'db.internal',
+                port: 5432,
+                database: 'app_db',
+                ...overrides,
+            },
+        });
+
+        it('shows the database before the address for server drivers', () => {
+            expect(connectionMeta(makeConn(), makeRemoteCaps())).toBe('app_db · db.internal:5432');
+        });
+
+        it('uses the first database of a multi-database selection', () => {
+            expect(connectionMeta(makeConn({database: ['crm', 'billing']}), makeRemoteCaps())).toBe(
+                'crm · db.internal:5432',
+            );
+        });
+
+        it('shows only the address when no database is selected', () => {
+            expect(
+                connectionMeta(makeConn({database: '', port: undefined}), makeRemoteCaps()),
+            ).toBe('db.internal');
+        });
+
+        it('shortens the home directory of local database files', () => {
+            const conn = makeConn({database: '/Users/me/Documents/app.db'});
+            expect(connectionMeta(conn, makeFileCaps(), '/Users/me')).toBe('~/Documents/app.db');
+            expect(connectionMeta(conn, makeFileCaps())).toBe('/Users/me/Documents/app.db');
         });
     });
 });

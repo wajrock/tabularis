@@ -53,19 +53,6 @@ export function partitionConnections(connections: ConnectionStatus[]): {
     };
 }
 
-/** CSS class for the connection button in the narrow sidebar */
-export function getConnectionItemClass(isActive: boolean): string {
-    // Active state is conveyed by the enlarged driver badge + rail indicator,
-    // not by a button background
-    return isActive ? 'text-accent' : 'text-secondary hover:text-primary';
-}
-
-/** CSS class for the status dot inside the connection button */
-export function getStatusDotClass(isActive: boolean, hasError: boolean): string {
-    if (hasError) return 'bg-accent-error';
-    return isActive ? 'bg-accent-success' : 'bg-accent-success/70';
-}
-
 /**
  * Returns the IDs of open connections whose driver matches any of the given driver IDs.
  * Used when disabling or uninstalling a plugin to determine which connections must be closed.
@@ -136,4 +123,32 @@ export function groupSidebarConnections<T extends {id: string}>(
         });
     }
     return {folders, ungrouped};
+}
+
+export type DropPosition = 'above' | 'below';
+
+/** Sorts items by a saved id order; items missing from it keep their relative order at the end. */
+export function sortByIdOrder<T extends {id: string}>(items: T[], order: string[]): T[] {
+    const rank = new Map(order.map((id, index) => [id, index]));
+    return [...items].sort((a, b) => {
+        const ra = rank.get(a.id);
+        const rb = rank.get(b.id);
+        if (ra === undefined && rb === undefined) return 0;
+        if (ra === undefined) return 1;
+        if (rb === undefined) return -1;
+        return ra - rb;
+    });
+}
+
+/** Moves `draggedId` just above or below `target.id`. */
+export function moveIdRelativeTo(
+    ids: string[],
+    draggedId: string,
+    target: {id: string; position: DropPosition},
+): string[] {
+    const rest = ids.filter((id) => id !== draggedId);
+    const targetIndex = rest.indexOf(target.id);
+    if (targetIndex === -1) return ids;
+    rest.splice(target.position === 'below' ? targetIndex + 1 : targetIndex, 0, draggedId);
+    return rest;
 }

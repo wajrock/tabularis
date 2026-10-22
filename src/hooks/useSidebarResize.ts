@@ -6,7 +6,14 @@ const DEFAULT_WIDTH = 256;
 const COLLAPSE_THRESHOLD = 100;
 const STORAGE_KEY = 'tabularis_sidebar_width';
 
-export const useSidebarResize = (onCollapse?: () => void) => {
+/** Width of the narrow navigation rail, the explorer's default left edge. */
+const DEFAULT_LEFT_OFFSET = 64;
+
+/** @param getLeftOffset returns the explorer's left edge in viewport pixels. */
+export const useSidebarResize = (
+    onCollapse?: () => void,
+    getLeftOffset: () => number = () => DEFAULT_LEFT_OFFSET,
+) => {
     const [sidebarWidth, setSidebarWidth] = useState(() => {
         const saved = localStorage.getItem(STORAGE_KEY);
         return saved ? parseInt(saved, 10) : DEFAULT_WIDTH;
@@ -14,9 +21,12 @@ export const useSidebarResize = (onCollapse?: () => void) => {
     const isDragging = useRef(false);
     const onCollapseRef = useRef(onCollapse);
 
+    const getLeftOffsetRef = useRef(getLeftOffset);
+
     useEffect(() => {
         onCollapseRef.current = onCollapse;
-    }, [onCollapse]);
+        getLeftOffsetRef.current = getLeftOffset;
+    }, [onCollapse, getLeftOffset]);
 
     const startResize = useCallback((e: React.MouseEvent) => {
         e.preventDefault();
@@ -25,9 +35,8 @@ export const useSidebarResize = (onCollapse?: () => void) => {
 
         const handleResize = (e: MouseEvent) => {
             if (!isDragging.current) return;
-            const newWidth = e.clientX - 64; // Subtract primary sidebar width (w-16 = 64px)
+            const newWidth = e.clientX - getLeftOffsetRef.current();
 
-            // Auto-collapse when dragged below threshold
             if (newWidth < COLLAPSE_THRESHOLD && onCollapseRef.current) {
                 isDragging.current = false;
                 document.body.style.cursor = 'default';
@@ -47,14 +56,12 @@ export const useSidebarResize = (onCollapse?: () => void) => {
             document.body.style.cursor = 'default';
             document.removeEventListener('mousemove', handleResize);
             document.removeEventListener('mouseup', stopResize);
-            // localStorage is handled by useEffect
         };
 
         document.addEventListener('mousemove', handleResize);
         document.addEventListener('mouseup', stopResize);
     }, []);
 
-    // Persist width on change as well to be safe
     useEffect(() => {
         localStorage.setItem(STORAGE_KEY, sidebarWidth.toString());
     }, [sidebarWidth]);

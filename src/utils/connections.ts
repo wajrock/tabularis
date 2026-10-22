@@ -8,6 +8,7 @@ import type {ConnectionGroup, SavedConnection} from '@/contexts/DatabaseContext'
 import type {ProxyOverride} from '@/types/proxy';
 import {isLocalDriver} from './driverCapabilities';
 import {isMultiDatabaseCapable} from './database';
+import {abbreviateHomePath} from './fsPath';
 
 export type DatabaseDriver = string;
 
@@ -332,6 +333,23 @@ export function connectionSubtitle(
           ? (labels?.databaseCount?.(db.length) ?? `${db.length} databases`)
           : db;
     return `${conn.params.host ?? 'localhost'}:${conn.params.port ?? ''}  ·  ${dbStr}`;
+}
+
+/**
+ * Second line of a connection in the sidebar: `database · host:port` for
+ * server drivers, the file path (home shortened to `~`) for local ones.
+ */
+export function connectionMeta(
+    conn: SavedConnection,
+    capabilities: DriverCapabilities | null | undefined,
+    homeDir?: string | null,
+): string {
+    const db = conn.params.database;
+    const firstDb = Array.isArray(db) ? (db[0] ?? '') : db;
+    if (isLocalDriver(capabilities)) return abbreviateHomePath(firstDb, homeDir);
+    const host = conn.params.host ?? 'localhost';
+    const address = conn.params.port ? `${host}:${conn.params.port}` : host;
+    return firstDb ? `${firstDb} · ${address}` : address;
 }
 
 /**

@@ -1,5 +1,10 @@
 import {describe, expect, it} from 'vitest';
-import {fileUriToPath, normalizeLocalDatabasePath, sanitizeLocalFilePath} from '@/utils/fsPath';
+import {
+    abbreviateHomePath,
+    fileUriToPath,
+    normalizeLocalDatabasePath,
+    sanitizeLocalFilePath,
+} from '@/utils/fsPath';
 
 describe('sanitizeLocalFilePath', () => {
     it('leaves plain paths alone', () => {
@@ -78,5 +83,25 @@ describe('normalizeLocalDatabasePath', () => {
             '/tmp/b.parquet',
         ]);
         expect(normalizeLocalDatabasePath(undefined)).toBeUndefined();
+    });
+});
+
+describe('abbreviateHomePath', () => {
+    it('replaces the home directory with ~', () => {
+        expect(abbreviateHomePath('/Users/me/Documents/app.db', '/Users/me')).toBe(
+            '~/Documents/app.db',
+        );
+        expect(abbreviateHomePath('/Users/me/data.db', '/Users/me/')).toBe('~/data.db');
+        expect(abbreviateHomePath('/Users/me', '/Users/me')).toBe('~');
+    });
+
+    it('handles Windows separators', () => {
+        expect(abbreviateHomePath('C:\\Users\\me\\app.db', 'C:\\Users\\me')).toBe('~\\app.db');
+    });
+
+    it('keeps paths outside the home directory', () => {
+        expect(abbreviateHomePath('/Users/meg/app.db', '/Users/me')).toBe('/Users/meg/app.db');
+        expect(abbreviateHomePath('/tmp/app.db', '/Users/me')).toBe('/tmp/app.db');
+        expect(abbreviateHomePath('/tmp/app.db', null)).toBe('/tmp/app.db');
     });
 });

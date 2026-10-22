@@ -52,7 +52,6 @@ export const DiscordCommunityCallout = ({storage}: DiscordCommunityCalloutProps)
 
     return (
         <>
-            {/* Persistent pulsing indicator anchored to the Discord button */}
             <span
                 aria-hidden="true"
                 data-testid="discord-callout-pulse"
@@ -62,14 +61,12 @@ export const DiscordCommunityCallout = ({storage}: DiscordCommunityCalloutProps)
                 <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-indigo-500 ring-2 ring-elevated" />
             </span>
 
-            {/* Callout popover */}
             <div
                 role="dialog"
                 aria-labelledby="discord-callout-title"
                 data-testid="discord-callout"
                 className="absolute left-[calc(100%+0.75rem)] bottom-0 w-72 rounded-xl overflow-hidden z-40 text-white shadow-2xl shadow-indigo-900/60 ring-1 ring-white/15 bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-700 animate-fade-in"
             >
-                {/* Pointer arrow toward the Discord icon */}
                 <span
                     aria-hidden="true"
                     className="absolute -left-1.5 bottom-5 w-3 h-3 rotate-45 bg-indigo-600 ring-1 ring-white/15"

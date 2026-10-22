@@ -1,26 +1,28 @@
 import {fireEvent, render, screen} from '@testing-library/react';
-import {describe, it, expect, vi} from 'vitest';
-import {ConnectionGroupFolder} from '@/components/layout/sidebar/ConnectionGroupFolder';
+import {describe, expect, it, vi} from 'vitest';
+import {ConnectionFolderRow} from '@/components/layout/navigation/ConnectionFolderRow';
 
-const renderFolder = (overrides: Partial<Parameters<typeof ConnectionGroupFolder>[0]> = {}) =>
+vi.mock('lucide-react', async () => await vi.importActual('lucide-react'));
+
+const renderFolder = (overrides: Partial<Parameters<typeof ConnectionFolderRow>[0]> = {}) =>
     render(
-        <ConnectionGroupFolder
+        <ConnectionFolderRow
             name="PG-PROD"
             path="PG / PG-PROD"
             count={2}
             isCollapsed={false}
             hasActiveConnection={false}
             onToggle={vi.fn()}
+            variant="expanded"
             {...overrides}
         >
             <span>child connection</span>
-        </ConnectionGroupFolder>,
+        </ConnectionFolderRow>,
     );
 
-describe('ConnectionGroupFolder', () => {
-    it('shows its connections and reports itself expanded', () => {
-        renderFolder();
-
+describe('ConnectionFolderRow', () => {
+    it.each(['expanded', 'rail'] as const)('shows its connections when open (%s)', (variant) => {
+        renderFolder({variant});
         expect(screen.getByText('child connection')).toBeInTheDocument();
         expect(screen.getByRole('button', {name: 'PG / PG-PROD'})).toHaveAttribute(
             'aria-expanded',
@@ -30,7 +32,6 @@ describe('ConnectionGroupFolder', () => {
 
     it('hides its connections when collapsed', () => {
         renderFolder({isCollapsed: true});
-
         expect(screen.queryByText('child connection')).not.toBeInTheDocument();
         expect(screen.getByRole('button', {name: 'PG / PG-PROD'})).toHaveAttribute(
             'aria-expanded',
@@ -41,21 +42,26 @@ describe('ConnectionGroupFolder', () => {
     it('toggles on click', () => {
         const onToggle = vi.fn();
         renderFolder({onToggle});
-
         fireEvent.click(screen.getByRole('button', {name: 'PG / PG-PROD'}));
-
         expect(onToggle).toHaveBeenCalledTimes(1);
     });
 
-    it('marks a collapsed folder that hides the active connection', () => {
+    it('highlights a collapsed folder that hides the current connection', () => {
         renderFolder({isCollapsed: true, hasActiveConnection: true});
-
-        expect(screen.getByTestId('rail-indicator')).toHaveClass('h-8');
+        expect(screen.getByRole('button', {name: 'PG / PG-PROD'})).toHaveClass(
+            'bg-surface-secondary',
+        );
     });
 
-    it('leaves the marker to the connection itself while expanded', () => {
+    it('leaves the highlight to the connection itself while open', () => {
         renderFolder({hasActiveConnection: true});
+        expect(screen.getByRole('button', {name: 'PG / PG-PROD'})).not.toHaveClass(
+            'bg-surface-secondary',
+        );
+    });
 
-        expect(screen.getByTestId('rail-indicator')).toHaveClass('h-4');
+    it('shows the connection count', () => {
+        renderFolder();
+        expect(screen.getByText('2')).toBeInTheDocument();
     });
 });

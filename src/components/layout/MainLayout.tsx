@@ -15,7 +15,8 @@ import {CommandPaletteModal} from '@/components/modals/CommandPaletteModal';
 import {CommandPaletteScopeBridge} from './CommandPaletteScopeBridge';
 import {ProductionBanner} from './ProductionBanner';
 import {RightSidebar} from './RightSidebar';
-import {Sidebar} from './Sidebar';
+import {AppNav} from '@/components/layout/navigation/AppNav';
+import {ExplorerPanel} from '@/components/layout/explorer/ExplorerPanel';
 const SplitPaneLayout = lazy(() =>
     import('./SplitPaneLayout').then((m) => ({default: m.SplitPaneLayout})),
 );
@@ -38,7 +39,8 @@ const MainLayoutContent = () => {
             {location.pathname !== '/editor' && (
                 <CommandPaletteScopeBridge scopeId={ROOT_COMMAND_SCOPE_ID} />
             )}
-            <Sidebar />
+            <AppNav />
+            <ExplorerPanel />
             <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
                 {location.pathname === '/editor' && <ProductionBanner />}
                 {/* Routed pages size themselves with h-full, which resolves against

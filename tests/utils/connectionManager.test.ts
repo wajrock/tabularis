@@ -2,11 +2,11 @@ import {describe, it, expect} from 'vitest';
 import {
     buildConnectionStatus,
     partitionConnections,
-    getConnectionItemClass,
-    getStatusDotClass,
     findConnectionsForDrivers,
     groupSidebarConnections,
     type ConnectionStatus,
+    moveIdRelativeTo,
+    sortByIdOrder,
 } from '@/utils/connectionManager';
 import type {SavedConnection, ConnectionData, ConnectionGroup} from '@/contexts/DatabaseContext';
 
@@ -191,47 +191,6 @@ describe('connectionManager', () => {
         });
     });
 
-    describe('getConnectionItemClass', () => {
-        it('should return active classes when isActive is true', () => {
-            const result = getConnectionItemClass(true);
-            expect(result).toContain('text-accent');
-            // Active state must not paint a button background: it is conveyed by
-            // the enlarged driver badge + rail indicator
-            expect(result).not.toContain('bg-');
-        });
-
-        it('should return inactive classes when isActive is false', () => {
-            const result = getConnectionItemClass(false);
-            expect(result).toContain('text-secondary');
-            expect(result).toContain('hover:text-primary');
-        });
-
-        it('should not return active classes when isActive is false', () => {
-            const result = getConnectionItemClass(false);
-            expect(result).not.toContain('text-accent');
-        });
-    });
-
-    describe('getStatusDotClass', () => {
-        it('should return red when there is an error', () => {
-            expect(getStatusDotClass(true, true)).toBe('bg-accent-error');
-            expect(getStatusDotClass(false, true)).toBe('bg-accent-error');
-        });
-
-        it('should return bright green for active connection without error', () => {
-            expect(getStatusDotClass(true, false)).toBe('bg-accent-success');
-        });
-
-        it('should return dimmed green for inactive connection without error', () => {
-            expect(getStatusDotClass(false, false)).toBe('bg-accent-success/70');
-        });
-
-        it('should prioritize error over active state', () => {
-            const result = getStatusDotClass(true, true);
-            expect(result).toBe('bg-accent-error');
-        });
-    });
-
     describe('findConnectionsForDrivers', () => {
         const makeDataMap = (entries: Record<string, string>) =>
             Object.fromEntries(Object.entries(entries).map(([id, driver]) => [id, {driver}]));
@@ -384,5 +343,46 @@ describe('connectionManager', () => {
             expect(result.folders).toEqual([]);
             expect(result.ungrouped.map((c) => c.id)).toEqual(['a']);
         });
+    });
+});
+
+describe('sortByIdOrder', () => {
+    const items = [{id: 'a'}, {id: 'b'}, {id: 'c'}, {id: 'd'}];
+
+    it('follows the saved order', () => {
+        expect(sortByIdOrder(items, ['c', 'a', 'd', 'b']).map((i) => i.id)).toEqual([
+            'c',
+            'a',
+            'd',
+            'b',
+        ]);
+    });
+
+    it('puts unknown items last in their original order', () => {
+        expect(sortByIdOrder(items, ['d', 'b']).map((i) => i.id)).toEqual(['d', 'b', 'a', 'c']);
+    });
+
+    it('does not mutate the input', () => {
+        sortByIdOrder(items, ['d']);
+        expect(items.map((i) => i.id)).toEqual(['a', 'b', 'c', 'd']);
+    });
+});
+
+describe('moveIdRelativeTo', () => {
+    it('moves an id above or below a target', () => {
+        expect(moveIdRelativeTo(['a', 'b', 'c'], 'c', {id: 'a', position: 'above'})).toEqual([
+            'c',
+            'a',
+            'b',
+        ]);
+        expect(moveIdRelativeTo(['a', 'b', 'c'], 'a', {id: 'b', position: 'below'})).toEqual([
+            'b',
+            'a',
+            'c',
+        ]);
+    });
+
+    it('keeps the list when the target is unknown', () => {
+        expect(moveIdRelativeTo(['a', 'b'], 'a', {id: 'z', position: 'above'})).toEqual(['a', 'b']);
     });
 });
