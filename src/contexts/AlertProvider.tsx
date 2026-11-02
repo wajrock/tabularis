@@ -46,7 +46,6 @@ export const AlertProvider = ({children}: {children: React.ReactNode}) => {
                 onClose={handleClose}
                 title={alert.title}
                 message={alert.message}
-                kind={alert.kind}
             />
         </AlertContext.Provider>
     );

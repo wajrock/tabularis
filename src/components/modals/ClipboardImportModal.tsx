@@ -449,11 +449,7 @@ export function ClipboardImportModal({
         !isLoadingFile;
 
     return (
-        <Modal
-            isOpen={isOpen}
-            onClose={close}
-            overlayClassName="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] px-4 py-6"
-        >
+        <Modal isOpen={isOpen} onClose={close}>
             <div
                 role="dialog"
                 aria-modal="true"

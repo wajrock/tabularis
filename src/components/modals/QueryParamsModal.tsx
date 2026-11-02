@@ -21,12 +21,7 @@ export const QueryParamsModal = ({
     mode = 'save',
 }: QueryParamsModalProps) => {
     return (
-        <Modal
-            key={isOpen ? 'open' : 'closed'}
-            isOpen={isOpen}
-            onClose={onClose}
-            overlayClassName="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
-        >
+        <Modal key={isOpen ? 'open' : 'closed'} isOpen={isOpen} onClose={onClose} zIndex={50}>
             <QueryParamsForm
                 parameters={parameters}
                 initialValues={initialValues}

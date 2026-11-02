@@ -4431,11 +4431,7 @@ export const NewConnectionModal = ({
     );
 
     return (
-        <Modal
-            isOpen={isOpen}
-            onClose={handleClose}
-            overlayClassName="fixed inset-0 bg-black/60 flex items-center justify-center z-[100] backdrop-blur-sm"
-        >
+        <Modal isOpen={isOpen} onClose={handleClose} zIndex={100}>
             <fieldset
                 disabled={isPersistencePending}
                 aria-busy={isPersistencePending}

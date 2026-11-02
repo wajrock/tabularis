@@ -29,11 +29,7 @@ export const PluginModalProvider = ({children}: {children: React.ReactNode}) => 
     const sizeClass = SIZE_CLASSES[modalState?.size ?? 'lg'];
 
     const modal = (
-        <Modal
-            isOpen={modalState !== null}
-            onClose={closeModal}
-            overlayClassName="fixed inset-0 bg-black/50 flex items-center justify-center z-[10000] backdrop-blur-sm"
-        >
+        <Modal isOpen={modalState !== null} onClose={closeModal} zIndex={10000}>
             <div
                 className={`bg-elevated border border-strong rounded-xl shadow-2xl flex flex-col ${sizeClass}`}
             >

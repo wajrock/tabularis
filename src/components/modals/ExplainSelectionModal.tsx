@@ -167,11 +167,7 @@ export const ExplainSelectionModal = ({
     onClose,
 }: ExplainSelectionModalProps) => {
     return (
-        <Modal
-            isOpen={isOpen}
-            onClose={onClose}
-            overlayClassName="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
-        >
+        <Modal isOpen={isOpen} onClose={onClose} zIndex={50}>
             {isOpen && (
                 <ExplainSelectionContent
                     key={queries.map((e) => e.query).join('\n')}

@@ -75,11 +75,7 @@ export const QueryModal = ({
     };
 
     return (
-        <Modal
-            isOpen={isOpen}
-            onClose={onClose}
-            overlayClassName="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
-        >
+        <Modal isOpen={isOpen} onClose={onClose} zIndex={50}>
             <div className="bg-elevated border border-default rounded-xl shadow-2xl w-full max-w-2xl p-6">
                 <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-semibold text-primary">{title}</h3>

@@ -313,7 +313,7 @@ export function TagSelector({selectedIds, onChange}: TagSelectorProps) {
                 message={t('tags.deleteConfirm', {name: deletingTag?.name ?? ''})}
                 variant="danger"
                 onConfirm={() => void handleDeleteConfirm()}
-                overlayClassName="fixed inset-0 bg-black/50 flex items-center justify-center z-[110] backdrop-blur-sm"
+                zIndex={110}
             />
         </div>
     );

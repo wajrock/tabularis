@@ -2,12 +2,6 @@ import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest';
 import {render, screen, fireEvent, act} from '@testing-library/react';
 import {ConfirmModal} from '@/components/modals/ConfirmModal';
 
-// Mock the Modal component to just render children when open
-vi.mock('@/components/ui/Modal', () => ({
-    Modal: ({isOpen, children}: {isOpen: boolean; children: React.ReactNode}) =>
-        isOpen ? <div data-testid="modal">{children}</div> : null,
-}));
-
 describe('ConfirmModal', () => {
     const mockOnConfirm = vi.fn();
     const mockOnClose = vi.fn();

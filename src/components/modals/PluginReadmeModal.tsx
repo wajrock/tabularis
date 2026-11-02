@@ -117,11 +117,7 @@ export function PluginReadmeModal({
     };
 
     return (
-        <Modal
-            isOpen={isOpen}
-            onClose={onClose}
-            overlayClassName="fixed inset-0 bg-black/50 flex items-center justify-center z-[110] backdrop-blur-sm"
-        >
+        <Modal isOpen={isOpen} onClose={onClose} zIndex={110}>
             <div className="bg-elevated border border-strong rounded-xl shadow-2xl w-[720px] max-w-[92vw] max-h-[85vh] overflow-hidden flex flex-col">
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-default bg-base">

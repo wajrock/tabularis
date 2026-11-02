@@ -28,11 +28,7 @@ export const ExportProgressModal = ({
     const {t} = useTranslation();
 
     return (
-        <Modal
-            isOpen={isOpen}
-            onClose={onClose}
-            overlayClassName="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
-        >
+        <Modal isOpen={isOpen} onClose={onClose} zIndex={50}>
             <div className="bg-elevated border border-strong rounded-lg shadow-xl w-96 p-6 animate-in fade-in zoom-in duration-200">
                 <div className="flex items-center justify-between mb-6">
                     <h3 className="text-lg font-semibold text-primary flex items-center gap-2">

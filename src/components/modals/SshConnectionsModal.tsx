@@ -12,11 +12,7 @@ export function SshConnectionsModal({isOpen, onClose}: SshConnectionsModalProps)
     const {t} = useTranslation();
 
     return (
-        <Modal
-            isOpen={isOpen}
-            onClose={onClose}
-            overlayClassName="fixed inset-0 bg-black/50 flex items-center justify-center z-[110] backdrop-blur-sm"
-        >
+        <Modal isOpen={isOpen} onClose={onClose} zIndex={110}>
             <div className="bg-base border border-strong rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col shadow-xl">
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-strong bg-elevated">
@@ -34,7 +30,7 @@ export function SshConnectionsModal({isOpen, onClose}: SshConnectionsModalProps)
                 {/* Content */}
                 <div className="flex-1 overflow-y-auto p-6">
                     {/* This modal sits at z-110, so the delete confirmation must stack above it. */}
-                    <SshConnectionsManager confirmOverlayClassName="fixed inset-0 bg-black/50 flex items-center justify-center z-[120] backdrop-blur-sm" />
+                    <SshConnectionsManager confirmZIndex={120} />
                 </div>
             </div>
         </Modal>

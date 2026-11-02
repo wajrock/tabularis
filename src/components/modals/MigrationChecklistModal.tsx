@@ -1,7 +1,9 @@
 import {useEffect, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {openUrl} from '@tauri-apps/plugin-opener';
-import {X, ArrowLeftRight, Check, Loader2, AlertTriangle, ExternalLink} from 'lucide-react';
+import {Check, Loader2, AlertTriangle, ExternalLink} from 'lucide-react';
+import {Button} from '@/components/ui/Button';
+import {Modal} from '@/components/ui/Modal';
 import type {SavedConnection} from '@/contexts/DatabaseContext';
 import type {PluginManifest} from '@/types/plugins';
 import type {MigrationOutcome} from '@/hooks/useBuiltinDriverMigration';
@@ -121,22 +123,6 @@ export const MigrationChecklistModal = ({
         };
     }, []);
 
-    // Escape closes the modal, same as the X button — per .rules/modals.md #4.
-    useEffect(() => {
-        if (!isOpen) return;
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') {
-                e.preventDefault();
-                setRowStatus({});
-                onClose();
-            }
-        };
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [isOpen, onClose]);
-
-    if (!isOpen) return null;
-
     const toggleChecked = (id: string) => {
         setChecked((prev) => {
             const next = new Set(prev);
@@ -226,166 +212,131 @@ export const MigrationChecklistModal = ({
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] backdrop-blur-sm">
-            <div className="bg-elevated border border-strong rounded-xl shadow-2xl w-[640px] max-h-[90vh] overflow-hidden flex flex-col">
-                {/* Header */}
-                <div className="flex items-center justify-between p-4 border-b border-default bg-base">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-accent-primary/15 rounded-lg">
-                            <ArrowLeftRight size={20} className="text-accent" />
-                        </div>
-                        <div>
-                            <h2 className="text-lg font-semibold text-primary">
-                                {t('migration.checklist.title')}
-                            </h2>
-                            <p className="text-xs text-secondary">
-                                {t('migration.checklist.subtitle', {count: candidateRows.length})}
-                            </p>
-                        </div>
-                    </div>
-                    <button
-                        onClick={handleClose}
-                        className="text-secondary hover:text-primary transition-colors"
+        <Modal
+            isOpen={isOpen}
+            onClose={handleClose}
+            title={t('migration.checklist.title')}
+            bodyClassName="flex flex-col gap-3"
+            footerStart={
+                migrating && (
+                    <p className="text-xs text-muted">{t('migration.checklist.migratingNotice')}</p>
+                )
+            }
+            footer={
+                <>
+                    <Button variant="outline" onClick={handleClose}>
+                        {t('migration.checklist.close')}
+                    </Button>
+                    <Button
+                        onClick={() => void handleMigrateSelected()}
+                        disabled={checked.size === 0 || migrating}
+                        icon={
+                            migrating ? <Loader2 size={16} className="animate-spin" /> : undefined
+                        }
                     >
-                        <X size={20} />
-                    </button>
-                </div>
-
-                {/* Content */}
-                <div className="p-6 space-y-3 overflow-y-auto">
-                    {candidateRows.length === 0 ? (
-                        <p className="text-sm text-secondary">{t('migration.checklist.noGaps')}</p>
-                    ) : (
-                        candidateRows.map(({conn, gaps, isUriBased}) => {
-                            const status = rowStatus[conn.id];
-                            return (
-                                <div
-                                    key={conn.id}
-                                    className="flex items-start gap-3 p-4 rounded-lg border border-default bg-base"
-                                >
-                                    <input
-                                        type="checkbox"
-                                        checked={checked.has(conn.id)}
-                                        onChange={() => toggleChecked(conn.id)}
-                                        disabled={migrating}
-                                        className="mt-1 accent-accent-primary"
-                                    />
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-2">
-                                            <span className="font-medium text-primary text-sm truncate">
-                                                {conn.name}
-                                            </span>
-                                            {status === 'running' && (
-                                                <span className="flex items-center gap-1.5 shrink-0">
-                                                    <Loader2
-                                                        size={13}
-                                                        className="text-accent animate-spin"
-                                                    />
-                                                    {testingIds.has(conn.id) && (
-                                                        <span className="text-xs text-muted">
-                                                            {t('migration.checklist.testing')}
-                                                        </span>
-                                                    )}
+                        {t('migration.checklist.migrateSelected', {count: checked.size})}
+                    </Button>
+                </>
+            }
+        >
+            <p className="text-sm text-secondary">
+                {t('migration.checklist.subtitle', {count: candidateRows.length})}
+            </p>
+            {candidateRows.length === 0 ? (
+                <p className="text-sm text-secondary">{t('migration.checklist.noGaps')}</p>
+            ) : (
+                candidateRows.map(({conn, gaps, isUriBased}) => {
+                    const status = rowStatus[conn.id];
+                    return (
+                        <div
+                            key={conn.id}
+                            className="flex items-start gap-3 rounded-lg border border-default p-4"
+                        >
+                            <input
+                                type="checkbox"
+                                checked={checked.has(conn.id)}
+                                onChange={() => toggleChecked(conn.id)}
+                                disabled={migrating}
+                                className="mt-1 accent-accent-primary"
+                            />
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                    <span className="font-medium text-primary text-sm truncate">
+                                        {conn.name}
+                                    </span>
+                                    {status === 'running' && (
+                                        <span className="flex items-center gap-1.5 shrink-0">
+                                            <Loader2
+                                                size={13}
+                                                className="text-accent animate-spin"
+                                            />
+                                            {testingIds.has(conn.id) && (
+                                                <span className="text-xs text-muted">
+                                                    {t('migration.checklist.testing')}
                                                 </span>
                                             )}
-                                            {status === 'ok' && (
-                                                <Check
-                                                    size={13}
-                                                    className="text-accent-success shrink-0"
-                                                />
-                                            )}
-                                            {(status === 'connection' ||
-                                                status === 'process' ||
-                                                status === 'failed') && (
-                                                <AlertTriangle
-                                                    size={13}
-                                                    className="text-accent-error shrink-0"
-                                                />
-                                            )}
-                                        </div>
-                                        {gaps.length > 0 && manifest && (
-                                            <div className="mt-1.5 space-y-1">
-                                                {gaps.map((gap) => {
-                                                    const reported = alreadyReported(
-                                                        manifest.id,
-                                                        gap.feature,
-                                                    );
-                                                    return (
-                                                        <div
-                                                            key={gap.feature}
-                                                            className="flex items-center justify-between gap-2 text-xs"
-                                                        >
-                                                            <span className="text-accent-warning">
-                                                                {gapLabel(gap.feature)}
-                                                            </span>
-                                                            {reported ? (
-                                                                <span className="text-muted shrink-0">
-                                                                    {t(
-                                                                        'migration.checklist.alreadyReported',
-                                                                    )}
-                                                                </span>
-                                                            ) : (
-                                                                <button
-                                                                    onClick={() =>
-                                                                        void handleReportGap(
-                                                                            gap.feature,
-                                                                        )
-                                                                    }
-                                                                    disabled={!repoUrl}
-                                                                    className="flex items-center gap-1 text-accent disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
-                                                                >
-                                                                    <ExternalLink size={11} />
-                                                                    {t(
-                                                                        'migration.checklist.reportThisGap',
-                                                                    )}
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
-                                        )}
-                                        {isUriBased && (
-                                            <p className="mt-1.5 text-xs text-accent-warning/80">
-                                                {t('migration.checklist.uriWarning')}
-                                            </p>
-                                        )}
-                                    </div>
+                                        </span>
+                                    )}
+                                    {status === 'ok' && (
+                                        <Check size={13} className="text-accent-success shrink-0" />
+                                    )}
+                                    {(status === 'connection' ||
+                                        status === 'process' ||
+                                        status === 'failed') && (
+                                        <AlertTriangle
+                                            size={13}
+                                            className="text-accent-error shrink-0"
+                                        />
+                                    )}
                                 </div>
-                            );
-                        })
-                    )}
-                </div>
-
-                {/* Footer */}
-                <div
-                    className={`p-4 border-t border-default bg-base/50 flex items-center gap-3 ${
-                        migrating ? 'justify-between' : 'justify-end'
-                    }`}
-                >
-                    {migrating && (
-                        <p className="text-xs text-muted">
-                            {t('migration.checklist.migratingNotice')}
-                        </p>
-                    )}
-                    <div className="flex gap-3">
-                        <button
-                            onClick={handleClose}
-                            className="px-4 py-2 text-secondary hover:text-primary transition-colors text-sm"
-                        >
-                            {t('migration.checklist.close')}
-                        </button>
-                        <button
-                            onClick={() => void handleMigrateSelected()}
-                            disabled={checked.size === 0 || migrating}
-                            className="px-4 py-2 bg-accent-primary hover:bg-accent-primary/90 disabled:opacity-50 text-inverse rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
-                        >
-                            {migrating && <Loader2 size={16} className="animate-spin" />}
-                            {t('migration.checklist.migrateSelected', {count: checked.size})}
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
+                                {gaps.length > 0 && manifest && (
+                                    <div className="mt-1.5 space-y-1">
+                                        {gaps.map((gap) => {
+                                            const reported = alreadyReported(
+                                                manifest.id,
+                                                gap.feature,
+                                            );
+                                            return (
+                                                <div
+                                                    key={gap.feature}
+                                                    className="flex items-center justify-between gap-2 text-xs"
+                                                >
+                                                    <span className="text-tint-warning-fg">
+                                                        {gapLabel(gap.feature)}
+                                                    </span>
+                                                    {reported ? (
+                                                        <span className="text-muted shrink-0">
+                                                            {t(
+                                                                'migration.checklist.alreadyReported',
+                                                            )}
+                                                        </span>
+                                                    ) : (
+                                                        <button
+                                                            onClick={() =>
+                                                                void handleReportGap(gap.feature)
+                                                            }
+                                                            disabled={!repoUrl}
+                                                            className="flex items-center gap-1 text-accent disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
+                                                        >
+                                                            <ExternalLink size={11} />
+                                                            {t('migration.checklist.reportThisGap')}
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                                {isUriBased && (
+                                    <p className="mt-1.5 text-xs text-tint-warning-fg">
+                                        {t('migration.checklist.uriWarning')}
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                    );
+                })
+            )}
+        </Modal>
     );
 };

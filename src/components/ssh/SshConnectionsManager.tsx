@@ -77,10 +77,10 @@ function SshInput({
 
 interface SshConnectionsManagerProps {
     /**
-     * Overlay class forwarded to the delete ConfirmModal, e.g. to stack it
-     * above a parent modal. Defaults to the standard Modal overlay.
+     * z-index of the delete ConfirmModal, e.g. to stack it above a parent
+     * modal. Defaults to the standard Modal stacking.
      */
-    confirmOverlayClassName?: string;
+    confirmZIndex?: number;
 }
 
 /**
@@ -88,7 +88,7 @@ interface SshConnectionsManagerProps {
  * SshConnectionsModal (connection-creation flow) and by the Settings SSH tab,
  * so all state and handlers live here — not in the hosts.
  */
-export function SshConnectionsManager({confirmOverlayClassName}: SshConnectionsManagerProps) {
+export function SshConnectionsManager({confirmZIndex}: SshConnectionsManagerProps) {
     const {t} = useTranslation();
     const [connections, setConnections] = useState<SshConnection[]>([]);
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -626,7 +626,7 @@ export function SshConnectionsManager({confirmOverlayClassName}: SshConnectionsM
                         : t('sshConnections.confirmDelete')
                 }
                 onConfirm={() => deleteTargetId && handleDelete(deleteTargetId)}
-                overlayClassName={confirmOverlayClassName}
+                zIndex={confirmZIndex}
             />
         </>
     );

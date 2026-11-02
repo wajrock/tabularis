@@ -61,11 +61,7 @@ export function ProductionGuardProvider({children}: {children: ReactNode}) {
     return (
         <ProductionGuardContext.Provider value={request}>
             {children}
-            <Modal
-                isOpen={pending !== null}
-                onClose={() => finish(false)}
-                overlayClassName="fixed inset-0 bg-black/60 flex items-center justify-center z-[200] backdrop-blur-sm"
-            >
+            <Modal isOpen={pending !== null} onClose={() => finish(false)} zIndex={200}>
                 <div className="bg-elevated border border-strong rounded-xl shadow-2xl w-[480px] overflow-hidden flex flex-col">
                     <div className="flex items-center justify-between p-4 border-b border-default bg-base">
                         <div className="flex items-center gap-3">

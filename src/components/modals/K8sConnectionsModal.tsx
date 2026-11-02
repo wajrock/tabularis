@@ -695,11 +695,7 @@ export function K8sConnectionsModal({isOpen, onClose, defaultPort}: K8sConnectio
     };
 
     return (
-        <Modal
-            isOpen={isOpen}
-            onClose={handleClose}
-            overlayClassName="fixed inset-0 bg-black/60 flex items-center justify-center z-[100] backdrop-blur-sm"
-        >
+        <Modal isOpen={isOpen} onClose={handleClose} zIndex={100}>
             <div className="bg-elevated border border-strong rounded-xl shadow-2xl w-[640px] max-h-[80vh] flex flex-col overflow-hidden">
                 <div className="flex items-center justify-between px-5 py-3 border-b border-default bg-base">
                     <h2 className="text-sm font-semibold text-primary">

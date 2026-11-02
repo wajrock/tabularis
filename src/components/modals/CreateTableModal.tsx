@@ -191,11 +191,7 @@ export const CreateTableModal = ({
     const hasEmptyColumnNames = columns.some((c) => !c.name.trim());
 
     return (
-        <Modal
-            isOpen={isOpen}
-            onClose={onClose}
-            overlayClassName="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100]"
-        >
+        <Modal isOpen={isOpen} onClose={onClose}>
             <div className="bg-elevated rounded-xl shadow-2xl w-[900px] border border-strong flex flex-col max-h-[90vh] overflow-hidden">
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-default bg-base">

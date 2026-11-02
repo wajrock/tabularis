@@ -1,6 +1,7 @@
-import {useEffect, useId, useState, type ReactNode} from 'react';
+import {useEffect, useId, useState, type ElementType, type ReactNode} from 'react';
 import {useTranslation} from 'react-i18next';
-import {AlertTriangle, Loader2, X} from 'lucide-react';
+import {Loader2} from 'lucide-react';
+import {Button} from '@/components/ui/Button';
 import {Modal} from '@/components/ui/Modal';
 import {SqlPreview} from '@/components/ui/SqlPreview';
 
@@ -8,16 +9,18 @@ interface ConfirmModalProps {
     isOpen: boolean;
     onClose: () => void;
     title: string;
+    /** Icon before the title, tinted after the variant. */
+    icon?: ElementType;
     message: string;
     /** Optional SQL shown in a read-only preview below the message. */
     sql?: string;
     confirmLabel?: string;
-    confirmClassName?: string;
     cancelLabel?: string;
     busy?: boolean;
     confirmDisabled?: boolean;
     children?: ReactNode;
     onConfirm: () => void;
+    /** `danger` gets the destructive confirm button; the others the primary one. */
     variant?: 'danger' | 'warning' | 'info';
     /**
      * When set, the confirm button stays disabled for this many seconds after the
@@ -25,18 +28,18 @@ interface ConfirmModalProps {
      * message before confirming a destructive action.
      */
     confirmDelaySeconds?: number;
-    /** Forwarded to the underlying Modal, e.g. to raise z-index above another modal. */
-    overlayClassName?: string;
+    /** Raise it above another modal. */
+    zIndex?: number;
 }
 
 export const ConfirmModal = ({
     isOpen,
     onClose,
     title,
+    icon,
     message,
     sql,
     confirmLabel,
-    confirmClassName,
     cancelLabel,
     busy = false,
     confirmDisabled = false,
@@ -44,10 +47,9 @@ export const ConfirmModal = ({
     onConfirm,
     variant = 'danger',
     confirmDelaySeconds,
-    overlayClassName,
+    zIndex,
 }: ConfirmModalProps) => {
     const {t} = useTranslation();
-    const titleId = useId();
     const messageId = useId();
     const [remaining, setRemaining] = useState(confirmDelaySeconds ?? 0);
 
@@ -68,104 +70,48 @@ export const ConfirmModal = ({
     }, [isOpen, confirmDelaySeconds]);
 
     const isCountingDown = remaining > 0;
-
-    const variantStyles = {
-        danger: {
-            icon: <AlertTriangle size={20} className="text-accent-error" />,
-            iconBg: 'bg-accent-error/15',
-            button: 'bg-accent-error hover:bg-accent-error/90 text-on-accent-error',
-        },
-        warning: {
-            icon: <AlertTriangle size={20} className="text-accent-warning" />,
-            iconBg: 'bg-accent-warning/15',
-            button: 'bg-accent-warning hover:bg-accent-warning/90 text-on-accent-warning',
-        },
-        info: {
-            icon: <AlertTriangle size={20} className="text-accent" />,
-            iconBg: 'bg-accent-primary/15',
-            button: 'bg-accent-primary hover:bg-accent-primary/90 text-inverse',
-        },
-    };
-
-    const currentVariant = variantStyles[variant];
+    const label = confirmLabel ?? (variant === 'danger' ? t('common.delete') : t('common.ok'));
 
     return (
         <Modal
             isOpen={isOpen}
-            onClose={() => {
-                if (!busy) onClose();
-            }}
-            overlayClassName={overlayClassName}
-        >
-            <div
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby={titleId}
-                aria-describedby={messageId}
-                aria-busy={busy || undefined}
-                className="bg-elevated border border-strong rounded-xl shadow-2xl w-[480px] overflow-hidden flex flex-col"
-            >
-                {/* Header */}
-                <div className="flex items-center justify-between p-4 border-b border-default bg-base">
-                    <div className="flex items-center gap-3">
-                        <div className={`p-2 ${currentVariant.iconBg} rounded-lg`}>
-                            {currentVariant.icon}
-                        </div>
-                        <h2 id={titleId} className="text-lg font-semibold text-primary">
-                            {title}
-                        </h2>
-                    </div>
-                    <button
-                        onClick={onClose}
-                        disabled={busy}
-                        aria-label={t('common.close')}
-                        className="text-secondary hover:text-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        <X size={20} />
-                    </button>
-                </div>
-
-                {/* Content */}
-                <div className="p-6 space-y-4">
-                    <p id={messageId} className="text-sm text-secondary leading-relaxed">
-                        {message}
-                    </p>
-                    {sql && <SqlPreview sql={sql} height="120px" />}
-                    {children}
-                </div>
-
-                {/* Footer */}
-                <div className="p-4 border-t border-default bg-base/50 flex justify-end gap-3">
-                    <button
-                        onClick={onClose}
-                        disabled={busy}
-                        className="px-4 py-2 text-secondary hover:text-primary transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
+            onClose={onClose}
+            title={title}
+            icon={icon}
+            iconTone={
+                variant === 'danger' ? 'danger' : variant === 'warning' ? 'warning' : 'accent'
+            }
+            size="sm"
+            busy={busy}
+            zIndex={zIndex}
+            describedBy={messageId}
+            bodyClassName="space-y-4"
+            footer={
+                <>
+                    <Button variant="outline" onClick={onClose} disabled={busy}>
                         {cancelLabel ?? t('common.cancel')}
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                        variant={variant === 'danger' ? 'danger' : 'primary'}
                         onClick={onConfirm}
                         disabled={isCountingDown || busy || confirmDisabled}
                         aria-busy={busy || undefined}
-                        className={`${
-                            confirmClassName ??
-                            `px-4 py-2 ${currentVariant.button} rounded-lg text-sm font-medium transition-colors`
-                        } disabled:opacity-50 disabled:cursor-not-allowed`}
+                        icon={
+                            busy ? (
+                                <Loader2 size={16} className="animate-spin" aria-hidden="true" />
+                            ) : undefined
+                        }
                     >
-                        {busy && (
-                            <Loader2
-                                size={14}
-                                className="inline-block mr-2 animate-spin"
-                                aria-hidden="true"
-                            />
-                        )}
-                        {isCountingDown
-                            ? `${confirmLabel ?? (variant === 'danger' ? t('common.delete') : t('common.ok'))} (${remaining})`
-                            : (confirmLabel ??
-                              (variant === 'danger' ? t('common.delete') : t('common.ok')))}
-                    </button>
-                </div>
-            </div>
+                        {isCountingDown ? `${label} (${remaining})` : label}
+                    </Button>
+                </>
+            }
+        >
+            <p id={messageId} className="text-sm leading-relaxed text-secondary">
+                {message}
+            </p>
+            {sql && <SqlPreview sql={sql} height="120px" />}
+            {children}
         </Modal>
     );
 };

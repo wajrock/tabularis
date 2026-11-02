@@ -149,11 +149,7 @@ export const ImportDatabaseModal = ({
     };
 
     return (
-        <Modal
-            isOpen={isOpen}
-            onClose={onClose}
-            overlayClassName="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
-        >
+        <Modal isOpen={isOpen} onClose={onClose} zIndex={50}>
             <div className="bg-base border border-default rounded-lg shadow-xl w-[600px] flex flex-col">
                 <div className="p-4 border-b border-default flex justify-between items-center">
                     <h2 className="text-lg font-semibold flex items-center gap-2">

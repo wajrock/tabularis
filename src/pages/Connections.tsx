@@ -1,6 +1,15 @@
 import {restoreSession} from '@/utils/restoreSession';
 import {getCurrentWindow} from '@tauri-apps/api/window';
-import {lazy, Suspense, useState, useEffect, useMemo, useRef, useCallback} from 'react';
+import {
+    lazy,
+    Suspense,
+    useState,
+    useEffect,
+    useMemo,
+    useRef,
+    useCallback,
+    type ElementType,
+} from 'react';
 import {useNavigate, useLocation} from 'react-router-dom';
 import {useTranslation} from 'react-i18next';
 import {LoadingState} from '@/components/ui/LoadingState';
@@ -150,9 +159,9 @@ export const Connections = () => {
     const [subgroupInputValue, setSubgroupInputValue] = useState('');
     const [confirmModal, setConfirmModal] = useState<{
         title: string;
+        icon?: ElementType;
         message: string;
         confirmLabel?: string;
-        confirmClassName?: string;
         variant?: 'danger' | 'warning' | 'info';
         onConfirm: () => void;
     } | null>(null);
@@ -737,7 +746,10 @@ export const Connections = () => {
     const handleDelete = (id: string) => {
         setConfirmModal({
             title: t('connections.deleteTitle'),
-            message: t('connections.confirmDelete'),
+            icon: Trash2,
+            message: t('connections.confirmDelete', {
+                name: connections.find((c) => c.id === id)?.name ?? '',
+            }),
             onConfirm: async () => {
                 setConfirmModal(null);
                 try {
@@ -1508,8 +1520,8 @@ export const Connections = () => {
                 onClose={() => setConfirmModal(null)}
                 title={confirmModal?.title ?? ''}
                 message={confirmModal?.message ?? ''}
+                icon={confirmModal?.icon}
                 confirmLabel={confirmModal?.confirmLabel}
-                confirmClassName={confirmModal?.confirmClassName}
                 variant={confirmModal?.variant}
                 onConfirm={() => {
                     confirmModal?.onConfirm();

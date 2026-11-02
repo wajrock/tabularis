@@ -72,11 +72,7 @@ export const ConnectionDiagnosticsModal = ({
     };
 
     return (
-        <Modal
-            isOpen={isOpen}
-            onClose={onClose}
-            overlayClassName="fixed inset-0 bg-black/50 flex items-center justify-center z-[110] backdrop-blur-sm"
-        >
+        <Modal isOpen={isOpen} onClose={onClose} zIndex={110}>
             <div className="bg-elevated border border-strong rounded-xl shadow-2xl w-[600px] max-h-[85vh] flex flex-col overflow-hidden">
                 {/* Header */}
                 <div className="p-4 border-b border-default bg-base flex items-start gap-3">

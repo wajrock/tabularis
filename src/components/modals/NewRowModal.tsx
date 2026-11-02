@@ -244,11 +244,7 @@ export const NewRowModal = ({isOpen, onClose, tableName, onSaveSuccess}: NewRowM
     )?.name;
 
     return (
-        <Modal
-            isOpen={isOpen}
-            onClose={onClose}
-            overlayClassName="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
-        >
+        <Modal isOpen={isOpen} onClose={onClose} zIndex={50}>
             <div className="bg-surface-secondary rounded-lg shadow-xl w-[600px] border border-strong flex flex-col max-h-[90vh]">
                 <div className="flex items-center justify-between p-4 border-b border-strong">
                     <h2 className="text-lg font-semibold text-primary">

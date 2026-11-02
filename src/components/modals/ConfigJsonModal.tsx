@@ -161,7 +161,7 @@ export const ConfigJsonModal = ({isOpen, onClose}: ConfigJsonModalProps) => {
                 title={t('settings.configJsonModal.restartRequired')}
                 message={t('settings.configJsonModal.restartMessage')}
                 confirmLabel={t('settings.configJsonModal.restartNow')}
-                confirmClassName="px-4 py-2 bg-accent-primary hover:bg-accent-primary/90 text-inverse rounded-lg text-sm font-medium transition-colors"
+                variant="info"
                 onConfirm={handleRestartNow}
             />
         </>
