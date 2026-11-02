@@ -63,7 +63,9 @@ export function NavHeader({variant, onToggle}: NavHeaderProps) {
         <div className="flex flex-col gap-6">
             <div className="flex h-7 items-center gap-2">
                 {logo}
-                <span className="text-[16px] font-bold leading-6 text-primary">Tabularis</span>
+                <span className="font-heading text-[16px] font-bold leading-6 text-primary">
+                    Tabularis
+                </span>
                 <div className="-mr-1.5 ml-auto flex items-center">
                     <IconButton label={paletteLabel} onClick={() => togglePalette('all')}>
                         <Command size={14} />

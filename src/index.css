@@ -33,10 +33,21 @@
         U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
+/* Geist (SIL OFL 1.1), variable weight: headings and titles. */
+@font-face {
+    font-family: 'Geist';
+    src: url('/fonts/geist-variable.woff2') format('woff2');
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}
+
 @theme {
     /* The redesign is specified in px. The root font size follows the user's
        font-size setting, so pin Tailwind's spacing and small text sizes in px. */
     --spacing: 4px;
+    /* Headings and titles (`font-heading`); body text keeps the theme's base font. */
+    --font-heading: 'Geist', var(--font-base);
     --text-xs: 12px;
     --text-xs--line-height: 16px;
     --text-sm: 13px;
@@ -272,6 +283,15 @@ code {
 /* Tailwind v4 dropped the pointer cursor on buttons: restore it on everything
    clickable. In the base layer, so `cursor-*` utilities still win. */
 @layer base {
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        font-family: var(--font-heading);
+    }
+
     button:not(:disabled),
     [role='button']:not([aria-disabled='true']),
     [role='menuitem']:not(:disabled),
