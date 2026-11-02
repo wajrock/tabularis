@@ -17,7 +17,7 @@ import {NavItem} from './NavItem';
 
 function SectionTitle({children}: {children: string}) {
     return (
-        <h2 className="mb-0.5 pb-1 pl-3 pt-4 text-[10px] font-semibold uppercase leading-3 tracking-[0.6px] text-muted first:pt-2">
+        <h2 className="mb-0.5 pb-1 pl-3 pt-4 text-[10px] font-semibold uppercase leading-3 tracking-[0.6px] text-muted/70 first:pt-2">
             {children}
         </h2>
     );
