@@ -2,25 +2,29 @@ import {useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {useSettings} from '@/hooks/useSettings';
 import {normalizeMaskingPatterns} from '@/utils/columnMasking';
+import {FormSection} from '@/components/ui/FormSection';
+import {Textarea} from '@/components/ui/Textarea';
 import {SettingRow} from './SettingControls';
-
-const TEXTAREA_CLASS =
-    'w-full h-28 bg-base border border-strong rounded-lg p-3 text-primary text-sm font-mono focus:outline-none focus:border-focus transition-colors resize-y';
 
 interface MaskingOverridesEditorProps {
     /** Saved connection the include/exclude lists apply to. */
     connectionId: string;
+    /** `rows`: Settings page rows; `fields`: stacked titled parts (connection modal). */
+    layout?: 'rows' | 'fields';
 }
 
 /**
  * Per-connection masking overrides (#485): "always mask" (include) and
  * "never mask" (exclude) lists, one `table.column` entry per line. Shared by
- * the Settings → Privacy tab and the connection modal's Privacy tab.
+ * the Settings → Privacy tab and the connection modal's Privacy section.
  *
  * Pass `key={connectionId}` from the caller so switching connections remounts
  * with fresh drafts.
  */
-export function MaskingOverridesEditor({connectionId}: MaskingOverridesEditorProps) {
+export function MaskingOverridesEditor({
+    connectionId,
+    layout = 'rows',
+}: MaskingOverridesEditorProps) {
     const {t} = useTranslation();
     const {settings, updateSetting} = useSettings();
 
@@ -47,55 +51,70 @@ export function MaskingOverridesEditor({connectionId}: MaskingOverridesEditorPro
         updateSetting('columnMaskingOverrides', next);
     };
 
+    const lists = [
+        {
+            field: 'include' as const,
+            label: t('settings.maskingInclude'),
+            description: t('settings.maskingIncludeDesc'),
+            value: includeDraft ?? include.join('\n'),
+            setDraft: setIncludeDraft,
+            draft: includeDraft,
+        },
+        {
+            field: 'exclude' as const,
+            label: t('settings.maskingExclude'),
+            description: t('settings.maskingExcludeDesc'),
+            value: excludeDraft ?? exclude.join('\n'),
+            setDraft: setExcludeDraft,
+            draft: excludeDraft,
+        },
+    ];
+
+    const textarea = (list: (typeof lists)[number]) => (
+        <Textarea
+            value={list.value}
+            disabled={!maskingEnabled}
+            onChange={(e) => list.setDraft(e.target.value)}
+            onBlur={() => {
+                if (list.draft !== null) {
+                    commitOverride(list.field, list.draft);
+                    list.setDraft(null);
+                }
+            }}
+            className="h-28 text-[12px]"
+            placeholder={t('settings.maskingOverridePlaceholder')}
+        />
+    );
+
+    if (layout === 'fields') {
+        return (
+            <div className="flex flex-col gap-6">
+                {lists.map((list) => (
+                    <FormSection
+                        key={list.field}
+                        size="sm"
+                        title={list.label}
+                        description={list.description}
+                    >
+                        {textarea(list)}
+                    </FormSection>
+                ))}
+            </div>
+        );
+    }
+
     return (
         <>
-            <SettingRow
-                label={t('settings.maskingInclude')}
-                description={t('settings.maskingIncludeDesc')}
-                vertical
-            >
-                <textarea
-                    autoCorrect="off"
-                    autoCapitalize="off"
-                    autoComplete="off"
-                    spellCheck={false}
-                    value={includeDraft ?? include.join('\n')}
-                    disabled={!maskingEnabled}
-                    onChange={(e) => setIncludeDraft(e.target.value)}
-                    onBlur={() => {
-                        if (includeDraft !== null) {
-                            commitOverride('include', includeDraft);
-                            setIncludeDraft(null);
-                        }
-                    }}
-                    className={TEXTAREA_CLASS}
-                    placeholder={t('settings.maskingOverridePlaceholder')}
-                />
-            </SettingRow>
-
-            <SettingRow
-                label={t('settings.maskingExclude')}
-                description={t('settings.maskingExcludeDesc')}
-                vertical
-            >
-                <textarea
-                    autoCorrect="off"
-                    autoCapitalize="off"
-                    autoComplete="off"
-                    spellCheck={false}
-                    value={excludeDraft ?? exclude.join('\n')}
-                    disabled={!maskingEnabled}
-                    onChange={(e) => setExcludeDraft(e.target.value)}
-                    onBlur={() => {
-                        if (excludeDraft !== null) {
-                            commitOverride('exclude', excludeDraft);
-                            setExcludeDraft(null);
-                        }
-                    }}
-                    className={TEXTAREA_CLASS}
-                    placeholder={t('settings.maskingOverridePlaceholder')}
-                />
-            </SettingRow>
+            {lists.map((list) => (
+                <SettingRow
+                    key={list.field}
+                    label={list.label}
+                    description={list.description}
+                    vertical
+                >
+                    {textarea(list)}
+                </SettingRow>
+            ))}
         </>
     );
 }
