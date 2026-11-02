@@ -13,6 +13,7 @@ import {ConnectionChips} from './ConnectionChips';
 import {ConnectionTile} from './ConnectionTile';
 import {connectionItemStateClass} from './connectionItemState';
 import {StatusBadge} from './StatusBadge';
+import {useConnectionItemClick} from './useConnectionItemClick';
 
 export interface ConnectionCardProps {
     conn: SavedConnection;
@@ -56,6 +57,11 @@ export const ConnectionCard = ({
     const connectIfPossible = () => {
         if (isDriverEnabled && !isConnecting) onConnect();
     };
+    const clickHandlers = useConnectionItemClick({
+        connect: connectIfPossible,
+        onToggleSelect,
+        onMouseDown,
+    });
 
     return (
         <div
@@ -63,16 +69,9 @@ export const ConnectionCard = ({
             tabIndex={0}
             aria-label={conn.name}
             aria-disabled={!isDriverEnabled || undefined}
-            onClick={(e) => {
-                if ((e.metaKey || e.ctrlKey) && onToggleSelect) {
-                    e.preventDefault();
-                    onToggleSelect();
-                }
-            }}
-            onDoubleClick={connectIfPossible}
+            {...clickHandlers}
             onKeyDown={onActivationKey(connectIfPossible)}
             onContextMenu={onContextMenu}
-            onMouseDown={onMouseDown}
             data-connection-id={conn.id}
             className={clsx(
                 'group relative flex cursor-pointer select-none flex-col gap-4 rounded-lg border border-default p-4 transition-shadow hover:shadow-card',

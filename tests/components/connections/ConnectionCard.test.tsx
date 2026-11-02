@@ -137,14 +137,21 @@ describe('ConnectionCard driver updates', () => {
         expect(container.querySelector('.h-8.w-8')).toHaveStyle({backgroundColor: '#ff0000'});
         expect(screen.getByText('💉')).toBeInTheDocument();
         const card = screen.getByRole('button', {name: 'Production'});
-        fireEvent.click(card);
-        expect(toggle).not.toHaveBeenCalled();
         fireEvent.click(card, {metaKey: true});
         fireEvent.click(card, {ctrlKey: true});
         expect(toggle).toHaveBeenCalledTimes(2);
         expect(props.onConnect).not.toHaveBeenCalled();
-        fireEvent.doubleClick(screen.getByText('Production'));
+        fireEvent.click(screen.getByText('Production'));
         expect(props.onConnect).toHaveBeenCalledOnce();
+        expect(toggle).toHaveBeenCalledTimes(2);
+    });
+
+    it('does not open the connection when the press was a drag', () => {
+        render(<Cards />);
+        const card = screen.getAllByRole('button', {name: 'Production'})[0];
+        fireEvent.mouseDown(card, {button: 0, clientX: 10, clientY: 10});
+        fireEvent.click(card, {clientX: 60, clientY: 10});
+        expect(props.onConnect).not.toHaveBeenCalled();
     });
 
     it('removes all shared indicators when the registry no longer reports the update', () => {
