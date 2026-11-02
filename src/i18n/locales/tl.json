@@ -600,6 +600,7 @@
     "maskingPatternsDesc": "Isang pattern bawat linya. Nama-mask ang column kapag naglalaman ang pangalan nito ng alinmang pattern (hindi case-sensitive).",
     "maskingOverrides": "Mga override bawat connection",
     "maskingOverridesDesc": "Pilit na i-mask (include) o huwag i-mask (exclude) ang mga partikular na column para sa isang connection. Isang entry na table.column bawat linya; may prayoridad ang exclude kaysa sa include at mga pattern.",
+    "maskingDisabledNotice": "Naka-off ang column masking sa Settings → Privacy, kaya hindi ginagamit ang mga listahang ito.",
     "maskingConnection": "Connection",
     "maskingConnectionDesc": "Piliin kung aling connection ang pinapatawan ng mga override na ito.",
     "maskingInclude": "Laging i-mask",
@@ -1184,6 +1185,12 @@
     "configError": "Pakiconfigure ang AI provider sa Settings at maglagay ng prompt."
   },
   "newConnection": {
+    "sections": "Mga seksyon",
+    "sectionGroups": {
+      "connection": "Koneksyon",
+      "network": "Network at seguridad",
+      "more": "Iba pa"
+    },
     "ssmForwardHint": "Nire-resolve sa {{document}} - ipinapasa sa {{host}}:{{port}} sa pamamagitan ng managed node. Baguhin ang target na address sa tab na General; ang loopback host ay ang node mismo.",
     "ssmIamHint": "Kailangan ng ssm:StartSession sa target at sa na-resolve na dokumento.",
     "ssmNotAvailable": "Hindi available ang AWS SSM para sa driver na ito.",
@@ -1194,7 +1201,7 @@
     "ssmTargetRequired": "Ilagay ang managed node na daraanan ng koneksyon.",
     "testSsm": "Subukan ang SSM",
     "testSsmHint": "Nagbubukas ng tunay na port forwarding session at isinasara itong muli, nang hindi kumokonekta sa database.",
-    "useSsm": "Gamitin ang AWS SSM port forwarding",
+    "useSsm": "I-enable ang AWS SSM port forwarding",
     "titleNew": "Bagong Connection",
     "titleEdit": "I-edit ang Connection",
     "subtitle": "I-configure ang mga setting ng database connection",
@@ -1237,7 +1244,7 @@
     "inMemoryDatabaseHint": "Magbukas ng pansamantalang database na umiiral lamang habang tumatakbo ang driver",
     "createSqliteFile": "Bago",
     "browseFolder": "Mag-browse ng folder",
-    "useSsh": "Gumamit ng SSH Tunnel",
+    "useSsh": "I-enable ang SSH tunnel",
     "sshHost": "SSH Host",
     "sshPort": "SSH Port",
     "sshUser": "SSH User",
@@ -1255,8 +1262,8 @@
     "save": "I-save",
     "failSave": "Nabigong i-save ang connection",
     "selectSshConnection": "Pumili ng SSH Connection",
-    "useSshConnection": "Gumamit ng Umiiral na SSH Connection",
-    "createInlineSsh": "I-configure ang SSH Inline",
+    "useSshConnection": "Naka-save na tunnel",
+    "createInlineSsh": "Custom",
     "manageSshConnections": "Pamahalaan ang mga SSH Connection",
     "noSshConnections": "Walang available na SSH connection",
     "sslMode": "SSL Mode",
@@ -1279,7 +1286,7 @@
     "chooseK8s": "Pumili ng connection...",
     "chooseNamespace": "Pumili ng namespace...",
     "chooseResource": "Pumili ng resource...",
-    "createInlineK8s": "Inline",
+    "createInlineK8s": "Custom",
     "k8sContext": "Context",
     "k8sNamespace": "Namespace",
     "k8sNotAvailable": "Hindi available ang Kubernetes para sa driver na ito.",
@@ -1295,8 +1302,8 @@
     "selectContextFirst": "Pumili muna ng context",
     "selectK8sConnection": "Pumili ng K8s Connection",
     "selectTypeFirst": "Pumili muna ng context/namespace/uri",
-    "useK8s": "Gumamit ng Kubernetes Port-Forward",
-    "useK8sConnection": "Naka-save na Connection",
+    "useK8s": "I-enable ang Kubernetes port-forward",
+    "useK8sConnection": "Naka-save na koneksyon",
     "startupScript": "Startup Script",
     "startupScriptDescription": "SQL na pinapatakbo sa bawat bagong connection sa data source na ito. Gamitin para sa mga session setting tulad ng SET / set_config (hal. bypass ng RLS). Paghiwalayin ang mga statement gamit ang semicolon.",
     "startupScriptPlaceholder": "SELECT set_config('app.bypass_rls', 'on', false);",
@@ -1307,8 +1314,6 @@
       "transaction": "PgBouncer transaction",
       "session": "PgBouncer session"
     },
-    "scrollTabsLeft": "I-scroll ang mga tab pakaliwa",
-    "scrollTabsRight": "I-scroll ang mga tab pakanan",
     "useIamAuth": "Gumamit ng AWS IAM Authentication (RDS)",
     "useIamAuthHint": "Ang password field ay itinuturing na RDS auth token (mula sa `aws rds generate-db-auth-token`). Kailangan ng TLS. Nag-e-expire ang mga token bawat 15 minuto.",
     "useIamAuthTlsRequired": "I-enable ang SSL mode sa itaas para magamit ang AWS IAM authentication.",
@@ -1325,6 +1330,9 @@
     "loadDatabasesHint": "I-click ang I-load ang mga database para kunin ang mga available."
   },
   "sshConnections": {
+    "new": "Bago",
+    "newTitle": "Bagong SSH connection",
+    "editTitle": "I-edit ang SSH connection",
     "title": "Mga SSH Connection",
     "createNew": "Gumawa ng Bagong SSH Connection",
     "noConnections": "Wala pang naka-configure na SSH connection",
@@ -2506,6 +2514,8 @@
     "dismiss": "I-dismiss"
   },
   "k8sConnections": {
+    "newTitle": "Bagong Kubernetes connection",
+    "editTitle": "I-edit ang Kubernetes connection",
     "title": "Mga Kubernetes Connection",
     "add": "Magdagdag",
     "empty": "Walang naka-save na Kubernetes connection. I-click ang \"Magdagdag\" para gumawa.",

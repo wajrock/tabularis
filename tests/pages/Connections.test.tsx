@@ -141,7 +141,7 @@ vi.mock('@/hooks/useConnectionCatalogue', () => ({
     }),
 }));
 
-vi.mock('@/components/modals/NewConnectionModal', () => ({
+vi.mock('@/components/modals/NewConnectionModal/NewConnectionModal', () => ({
     NewConnectionModal: () => null,
 }));
 

@@ -3,7 +3,7 @@ import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest';
 import {act, render, screen, fireEvent, waitFor} from '@testing-library/react';
 import {invoke} from '@tauri-apps/api/core';
 import {save} from '@tauri-apps/plugin-dialog';
-import {NewConnectionModal} from '@/components/modals/NewConnectionModal';
+import {NewConnectionModal} from '@/components/modals/NewConnectionModal/NewConnectionModal';
 import {PluginSlotContext} from '@/contexts/PluginSlotContext';
 import type {PluginSlotRegistryType} from '@/contexts/PluginSlotContext';
 import type {SlotComponentProps, SlotContribution} from '@/types/pluginSlots';
@@ -65,19 +65,36 @@ vi.mock('@/components/ui/Modal', () => ({
     Modal: ({
         isOpen,
         onClose,
+        title,
+        headerActions,
+        footerStart,
+        footer,
+        className,
         children,
     }: {
         isOpen: boolean;
         onClose: () => void;
+        title?: ReactNode;
+        headerActions?: ReactNode;
+        footerStart?: ReactNode;
+        footer?: ReactNode;
+        className?: string;
         children: ReactNode;
     }) =>
         isOpen ? (
-            <div data-testid="modal">
+            <div data-testid="modal" className={className}>
+                <h2>{title}</h2>
+                {headerActions}
                 <button type="button" aria-label="modal-close" onClick={onClose} />
                 {children}
+                {footerStart}
+                {footer}
             </div>
         ) : null,
 }));
+
+// The startup script editor (Advanced) needs Monaco and the theme context.
+vi.mock('@/components/ui/SqlEditorWrapper', () => ({SqlEditorWrapper: () => null}));
 
 vi.mock('@/components/ui/Select', () => ({
     Select: ({ariaLabel, value, options, onChange, placeholder, labels}: MockSelectProps) => (
@@ -235,16 +252,12 @@ vi.mock('@/utils/k8s', () => ({
     validateK8sPath: k8sMocks.validateK8sPath,
 }));
 
-vi.mock('@/components/modals/NewConnectionModal/AppearanceSection', () => ({
-    AppearanceSection: () => null,
+vi.mock('@/components/modals/NewConnectionModal/appearance/AppearanceEditor', () => ({
+    AppearanceEditor: () => null,
 }));
 
-vi.mock('@/components/modals/SshConnectionsModal', () => ({
-    SshConnectionsModal: () => null,
-}));
-
-vi.mock('@/components/modals/K8sConnectionsModal', () => ({
-    K8sConnectionsModal: () => null,
+vi.mock('@/components/modals/K8sConnectionModal', () => ({
+    K8sConnectionModal: () => null,
 }));
 
 interface Deferred<T> {
@@ -396,7 +409,7 @@ describe('NewConnectionModal layout', () => {
         it('keeps the draft default and deselection when databases are reloaded', async () => {
             const select = await openDatabaseSelection();
             fireEvent.change(select, {target: {value: 'reporting'}});
-            fireEvent.click(screen.getByRole('button', {name: 'analytics', exact: true}));
+            fireEvent.click(screen.getByRole('checkbox', {name: 'analytics', exact: true}));
             vi.mocked(invoke).mockClear();
             fireEvent.click(screen.getByText('newConnection.loadDatabases'));
             await waitFor(() =>
@@ -420,9 +433,9 @@ describe('NewConnectionModal layout', () => {
         it('falls back to the next selected database when the default is removed', async () => {
             const select = await openDatabaseSelection();
             fireEvent.change(select, {target: {value: 'reporting'}});
-            fireEvent.click(screen.getByRole('button', {name: 'reporting', exact: true}));
+            fireEvent.click(screen.getByRole('checkbox', {name: 'reporting', exact: true}));
             expect(select).toHaveValue('analytics');
-            fireEvent.click(screen.getByRole('button', {name: 'analytics', exact: true}));
+            fireEvent.click(screen.getByRole('checkbox', {name: 'analytics', exact: true}));
             expect(select).toHaveValue('production');
             fireEvent.click(screen.getByText('newConnection.save'));
             await waitFor(() =>
@@ -453,8 +466,8 @@ describe('NewConnectionModal layout', () => {
             fireEvent.click(screen.getByText('newConnection.selectDatabases'));
             fireEvent.click(screen.getByText('newConnection.chooseDatabases'));
             fireEvent.click(screen.getByText('newConnection.loadDatabases'));
-            fireEvent.click(await screen.findByRole('button', {name: 'analytics', exact: true}));
-            fireEvent.click(screen.getByRole('button', {name: 'production', exact: true}));
+            fireEvent.click(await screen.findByRole('checkbox', {name: 'analytics', exact: true}));
+            fireEvent.click(screen.getByRole('checkbox', {name: 'production', exact: true}));
             fireEvent.change(
                 screen.getByRole('combobox', {name: 'newConnection.defaultDatabase'}),
                 {target: {value: 'production'}},
@@ -512,12 +525,10 @@ describe('NewConnectionModal layout', () => {
 
     it('keeps the dialog shell at a stable viewport-bounded height', () => {
         const {container} = renderModal();
-        const shell = container.querySelector('fieldset');
+        const shell = container.querySelector('[data-testid="modal"]');
 
+        // The Modal panel is a flex column that clips; this dialog only fixes its height.
         expect(shell).toHaveClass('h-[min(760px,90vh)]');
-        expect(shell).toHaveClass('overflow-hidden');
-        expect(shell).toHaveClass('flex');
-        expect(shell).toHaveClass('flex-col');
     });
 
     it('applies additive hide and label overrides to common fields', () => {
@@ -573,10 +584,11 @@ function openAdvancedSettings(): HTMLInputElement {
 }
 
 function fillSaveFields() {
+    // Name and database both live in the General tab.
+    fireEvent.click(screen.getByText('newConnection.general'));
     fireEvent.change(screen.getByPlaceholderText('newConnection.namePlaceholder'), {
         target: {value: 'K8s database'},
     });
-    fireEvent.click(screen.getByText('newConnection.general'));
     fireEvent.change(screen.getByPlaceholderText('newConnection.dbNamePlaceholder'), {
         target: {value: 'database'},
     });
@@ -595,9 +607,7 @@ async function chooseServiceResource() {
         target: {value: 'db'},
     });
 
-    fireEvent.change(screen.getByLabelText('newConnection.k8sSelectType'), {
-        target: {value: 'service'},
-    });
+    fireEvent.click(screen.getByRole('radio', {name: 'newConnection.k8sResourceTypeService'}));
 
     await waitFor(() => {
         expect(screen.getByRole('option', {name: 'mysql-svc'})).toBeInTheDocument();
@@ -726,9 +736,7 @@ describe('NewConnectionModal advanced inline K8s paths', () => {
         await waitFor(() => {
             expect(screen.getByRole('option', {name: 'ctx-a'})).toBeInTheDocument();
         });
-        fireEvent.change(screen.getByLabelText('newConnection.k8sSelectType'), {
-            target: {value: 'service'},
-        });
+        fireEvent.click(screen.getByRole('radio', {name: 'newConnection.k8sResourceTypeService'}));
         fireEvent.change(screen.getByLabelText('newConnection.chooseContext'), {
             target: {value: 'ctx-a'},
         });
@@ -807,6 +815,7 @@ describe('NewConnectionModal advanced inline K8s paths', () => {
         await waitFor(() => {
             expect(invoke).toHaveBeenCalledWith('test_connection', expect.anything());
         });
+        fireEvent.click(screen.getByText('newConnection.general'));
         fireEvent.change(screen.getByPlaceholderText('newConnection.namePlaceholder'), {
             target: {value: 'Changed while testing'},
         });
@@ -963,21 +972,19 @@ describe('NewConnectionModal advanced inline K8s paths', () => {
         fireEvent.click(screen.getByText('Kubernetes'));
         fireEvent.click(screen.getByLabelText('newConnection.useK8s'));
 
-        await waitFor(() => {
-            expect(screen.getByRole('option', {name: /Cluster A/})).toBeInTheDocument();
-        });
-        const savedConnectionSelect = screen.getByLabelText('newConnection.chooseK8s');
-        fireEvent.change(savedConnectionSelect, {
-            target: {value: 'saved-a'},
-        });
+        const pickSavedK8s = async (name: RegExp) => {
+            fireEvent.click(
+                await screen.findByRole('button', {name: 'newConnection.selectK8sConnection'}),
+            );
+            fireEvent.click(await screen.findByRole('menuitem', {name}));
+        };
+        await pickSavedK8s(/Cluster A/);
         fireEvent.click(screen.getByText('newConnection.testConnection'));
         await waitFor(() => {
             expect(invoke).toHaveBeenCalledWith('test_connection', expect.anything());
         });
 
-        fireEvent.change(savedConnectionSelect, {
-            target: {value: 'saved-b'},
-        });
+        await pickSavedK8s(/Cluster B/);
         await act(async () => {
             testResult.resolve('obsolete success');
         });
@@ -1045,8 +1052,10 @@ describe('NewConnectionModal advanced inline K8s paths', () => {
             await waitFor(() => {
                 expect(k8sMocks.validateK8sPath).toHaveBeenCalledWith('/opt/kubectl', 'kubectl');
             });
-            expect(screen.getByText('newConnection.testConnection')).toBeDisabled();
-            expect(screen.getByText('newConnection.save')).toBeDisabled();
+            expect(
+                screen.getByText('newConnection.testConnection').closest('button'),
+            ).toBeDisabled();
+            expect(screen.getByText('newConnection.save').closest('button')).toBeDisabled();
 
             fireEvent.change(screen.getByLabelText('newConnection.chooseContext'), {
                 target: {value: 'ctx-next'},
@@ -1056,7 +1065,7 @@ describe('NewConnectionModal advanced inline K8s paths', () => {
             });
 
             await waitFor(() => {
-                expect(screen.getByText(actionLabel)).not.toBeDisabled();
+                expect(screen.getByText(actionLabel).closest('button')).not.toBeDisabled();
             });
             expect(invoke).not.toHaveBeenCalledWith(command, expect.anything());
         },
@@ -1078,10 +1087,13 @@ describe('NewConnectionModal advanced inline K8s paths', () => {
             );
         });
         const selects = screen.getAllByRole('combobox') as HTMLSelectElement[];
-        expect(selects[0]).toHaveValue('');
-        expect(selects[1]).toHaveValue('');
-        expect(selects[2]).toHaveValue('');
-        expect(selects[3]).toHaveValue('');
+        // Context, namespace and resource name; the resource type is a radio group.
+        expect(selects).toHaveLength(3);
+        for (const select of selects) expect(select).toHaveValue('');
+        // The resource type goes back to its default, Service.
+        expect(
+            screen.getByRole('radio', {name: 'newConnection.k8sResourceTypeService'}),
+        ).toHaveAttribute('aria-checked', 'true');
         expect(portInput).toHaveValue(15432);
 
         await chooseServiceResource();
@@ -1218,7 +1230,8 @@ describe('NewConnectionModal advanced inline K8s paths', () => {
         await waitFor(() => {
             expect(invoke).toHaveBeenCalledWith('save_connection', expect.anything());
         });
-        expect(screen.getByPlaceholderText('newConnection.namePlaceholder')).toBeDisabled();
+        // The whole form (inside its fieldset) is locked while saving.
+        expect(screen.getByText('Kubernetes').closest('fieldset')).toBeDisabled();
         fireEvent.click(screen.getByLabelText('modal-close'));
         expect(onClose).not.toHaveBeenCalled();
 
@@ -1239,6 +1252,8 @@ describe('NewConnectionModal advanced inline K8s paths', () => {
             expect(screen.getByText('newConnection.nameRequired')).toBeInTheDocument();
         });
 
+        // A missing name brings the General tab forward; go back to Kubernetes.
+        fireEvent.click(screen.getByText('Kubernetes'));
         const kubectlInput = openAdvancedSettings();
         fireEvent.change(kubectlInput, {target: {value: '/opt/kubectl'}});
         fireEvent.blur(kubectlInput);
@@ -1446,16 +1461,21 @@ describe('NewConnectionModal SSL mode options (issue #614)', () => {
     // own `needs_tls()` only recognizes the Postgres-style hyphenated values
     // ("require"/"verify-ca"/"verify-full"), so a connection saved with the
     // MySQL-style "required"/"verify_ca" would silently connect in cleartext.
+    /** SSL modes listed in the open SSL Mode menu (labels are i18n keys in tests). */
+    const sslModeMenuValues = () =>
+        screen
+            .getAllByRole('menuitem')
+            .map((item) => item.textContent?.replace('newConnection.sslModes.', ''));
+
     it("shows Postgres-style SSL mode options for a non-'postgres' driver with sql_dialect: postgres", async () => {
         renderModal(createInitialConnection({driver: 'postgresql'}));
 
         fireEvent.click(screen.getByText('SSL'));
 
-        const select = screen.getByLabelText('select');
-        const optionValues = Array.from(select.querySelectorAll('option'))
-            .map((o) => o.getAttribute('value'))
-            .filter((v) => v !== '');
-        expect(optionValues).toEqual([
+        const select = screen.getByRole('button', {name: 'newConnection.sslMode'});
+        expect(select).toHaveTextContent('newConnection.sslModes.prefer');
+        fireEvent.click(select);
+        expect(sslModeMenuValues()).toEqual([
             'disable',
             'allow',
             'prefer',
@@ -1463,7 +1483,6 @@ describe('NewConnectionModal SSL mode options (issue #614)', () => {
             'verify-ca',
             'verify-full',
         ]);
-        expect(select).toHaveValue('prefer');
     });
 
     it('still shows MySQL-style SSL mode options for the mysql driver', async () => {
@@ -1471,11 +1490,8 @@ describe('NewConnectionModal SSL mode options (issue #614)', () => {
 
         fireEvent.click(screen.getByText('SSL'));
 
-        const select = screen.getByLabelText('select');
-        const optionValues = Array.from(select.querySelectorAll('option'))
-            .map((o) => o.getAttribute('value'))
-            .filter((v) => v !== '');
-        expect(optionValues).toEqual([
+        fireEvent.click(screen.getByRole('button', {name: 'newConnection.sslMode'}));
+        expect(sslModeMenuValues()).toEqual([
             'disabled',
             'preferred',
             'required',
@@ -1891,6 +1907,19 @@ describe('NewConnectionModal keychain default', () => {
 
         expect(keychainCheckbox()).not.toBeChecked();
         expect(screen.getByText('newConnection.secretsStoredInPlainText')).toBeInTheDocument();
+    });
+
+    it('keeps the custom proxy mode selected until a host is entered', () => {
+        renderModal();
+        pickEngineFromCatalogue();
+        fireEvent.click(screen.getByText('newConnection.advanced'));
+
+        fireEvent.click(screen.getByRole('radio', {name: 'settings.network.modeCustom'}));
+
+        expect(screen.getByRole('radio', {name: 'settings.network.modeCustom'})).toHaveAttribute(
+            'aria-checked',
+            'true',
+        );
     });
 
     it('saves a new connection with the keychain enabled', async () => {

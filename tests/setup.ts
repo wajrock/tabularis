@@ -259,6 +259,15 @@ vi.mock('lucide-react', () => ({
     Image: () => null,
     Pipette: () => null,
     Upload: () => null,
+    PawPrint: () => null,
+    Coffee: () => null,
+    Plane: () => null,
+    Trophy: () => null,
+    Lightbulb: () => null,
+    SearchX: () => null,
+    CircleCheck: () => null,
+    CloudOff: () => null,
+    ArrowDownToLine: () => null,
 }));
 
 // Mock lucide-react/dynamicIconImports with a small deterministic set

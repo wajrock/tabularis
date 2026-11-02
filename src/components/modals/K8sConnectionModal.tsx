@@ -1,8 +1,7 @@
 import {useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {X, Plus, Edit2, Trash2, Check, Loader2, Zap, XCircle} from 'lucide-react';
+import {AlertCircle, Boxes, Check, Loader2, Trash2, Zap} from 'lucide-react';
 import {
-    loadK8sConnections,
     saveK8sConnection,
     updateK8sConnection,
     deleteK8sConnection,
@@ -19,15 +18,25 @@ import {
 import {toErrorMessage} from '@/utils/errors';
 import {useK8sPathOverrides} from '@/hooks/useK8sPathOverrides';
 import {useLatestAsync} from '@/hooks/useLatestAsync';
+import {Button} from '@/components/ui/Button';
+import {Field} from '@/components/ui/Field';
+import {InlineBanner} from '@/components/ui/InlineBanner';
+import {Input} from '@/components/ui/Input';
 import {Modal} from '@/components/ui/Modal';
+import {SegmentedControl} from '@/components/ui/SegmentedControl';
 import {Select} from '@/components/ui/Select';
 import {K8sAdvancedSettings} from '@/components/ui/K8sAdvancedSettings';
-import clsx from 'clsx';
 
-interface K8sConnectionsModalProps {
+interface K8sConnectionModalProps {
     isOpen: boolean;
     onClose: () => void;
+    /** Connection to edit; omitted to create one. */
+    connection?: K8sConnection | null;
     defaultPort?: number | null;
+    onSaved?: (connection: K8sConnection) => void;
+    onDeleted?: (id: string) => void;
+    /** Raised above a parent modal (the connection modal). */
+    zIndex?: number;
 }
 
 interface DiscoveryErrors {
@@ -38,14 +47,21 @@ interface DiscoveryErrors {
 
 type DiscoverySource = keyof DiscoveryErrors;
 
-const InputClass =
-    'w-full px-3 pt-2 pb-1 bg-base border border-strong rounded-lg text-primary focus:border-focus focus:outline-none leading-tight';
-const LabelClass = 'block text-xs uppercase font-bold text-muted mb-1';
-
-export function K8sConnectionsModal({isOpen, onClose, defaultPort}: K8sConnectionsModalProps) {
+/**
+ * Create or edit one saved Kubernetes port-forward: context, namespace and
+ * resource are discovered with kubectl; Test checks the cluster is reachable.
+ */
+export function K8sConnectionModal({
+    isOpen,
+    onClose,
+    connection,
+    defaultPort,
+    onSaved,
+    onDeleted,
+    zIndex,
+}: K8sConnectionModalProps) {
     const {t} = useTranslation();
     const {invalidate, run} = useLatestAsync();
-    const [connections, setConnections] = useState<K8sConnection[]>([]);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [isCreating, setIsCreating] = useState(false);
 
@@ -119,13 +135,6 @@ export function K8sConnectionsModal({isOpen, onClose, defaultPort}: K8sConnectio
         setTestStatus('idle');
         setTestMessage('');
     }, [invalidate]);
-
-    const loadConnections = useCallback(async () => {
-        const result = await run('k8s-connections', () => loadK8sConnections());
-        if (result.status === 'success') {
-            setConnections(result.value);
-        }
-    }, [run]);
 
     const loadContexts = useCallback(
         async (options: K8sCommandOptions) => {
@@ -274,7 +283,6 @@ export function K8sConnectionsModal({isOpen, onClose, defaultPort}: K8sConnectio
 
     useEffect(() => {
         if (!isOpen) {
-            invalidate('k8s-connections');
             invalidateFormRequests();
             cancelPathValidation();
             actionSequenceRef.current += 1;
@@ -286,9 +294,7 @@ export function K8sConnectionsModal({isOpen, onClose, defaultPort}: K8sConnectio
             });
             return;
         }
-
-        void Promise.resolve().then(loadConnections);
-    }, [cancelPathValidation, invalidate, invalidateFormRequests, isOpen, loadConnections]);
+    }, [cancelPathValidation, invalidateFormRequests, isOpen]);
 
     const resetForm = useCallback(
         (options: K8sCommandOptions = {}) => {
@@ -365,6 +371,19 @@ export function K8sConnectionsModal({isOpen, onClose, defaultPort}: K8sConnectio
             loadResources,
         ],
     );
+
+    // Each opening starts from the given connection, or an empty form; once per opening.
+    const initializedForRef = useRef<string | null>(null);
+    useEffect(() => {
+        if (!isOpen) {
+            initializedForRef.current = null;
+            return;
+        }
+        const key = connection?.id ?? 'new';
+        if (initializedForRef.current === key) return;
+        initializedForRef.current = key;
+        queueMicrotask(() => (connection ? handleEdit(connection) : handleCreate()));
+    }, [connection, handleCreate, handleEdit, isOpen]);
 
     const handleCancel = useCallback(() => {
         resetForm();
@@ -564,19 +583,20 @@ export function K8sConnectionsModal({isOpen, onClose, defaultPort}: K8sConnectio
                 ) {
                     return;
                 }
+                let saved: K8sConnection | undefined;
                 if (isCreating) {
-                    await saveK8sConnection(input);
+                    saved = await saveK8sConnection(input);
                 } else if (editingId) {
-                    await updateK8sConnection(editingId, input);
+                    saved = await updateK8sConnection(editingId, input);
                 }
-                await loadConnections();
                 if (
                     activeActionRef.current !== actionId ||
                     actionSnapshotRef.current !== startingSnapshot
                 ) {
                     return;
                 }
-                handleCancel();
+                if (saved) onSaved?.(saved);
+                handleClose();
             } catch (error) {
                 if (
                     activeActionRef.current === actionId &&
@@ -595,28 +615,27 @@ export function K8sConnectionsModal({isOpen, onClose, defaultPort}: K8sConnectio
         effectivePort,
         ensureApplied,
         finishFormAction,
-        handleCancel,
+        handleClose,
         isCreating,
-        loadConnections,
         name,
         namespace,
+        onSaved,
         resourceName,
         resourceType,
         t,
     ]);
 
-    const handleDelete = useCallback(
-        async (id: string) => {
-            try {
-                await deleteK8sConnection(id);
-                await loadConnections();
-                if (editingId === id) handleCancel();
-            } catch (error) {
-                console.error('Failed to delete K8s connection:', error);
-            }
-        },
-        [editingId, handleCancel, loadConnections],
-    );
+    const handleDelete = useCallback(async () => {
+        if (!editingId) return;
+        try {
+            await deleteK8sConnection(editingId);
+            onDeleted?.(editingId);
+            handleClose();
+        } catch (error) {
+            console.error('Failed to delete K8s connection:', error);
+            setValidationError(toErrorMessage(error));
+        }
+    }, [editingId, handleClose, onDeleted]);
 
     const handleTest = useCallback(async () => {
         const actionId = beginFormAction();
@@ -688,98 +707,65 @@ export function K8sConnectionsModal({isOpen, onClose, defaultPort}: K8sConnectio
         pathActionError,
         testStatus,
         testMessage,
-        isActionPending,
-        onTest: handleTest,
-        onSave: handleSave,
-        onCancel: handleCancel,
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={handleClose} zIndex={100}>
-            <div className="bg-elevated border border-strong rounded-xl shadow-2xl w-[640px] max-h-[80vh] flex flex-col overflow-hidden">
-                <div className="flex items-center justify-between px-5 py-3 border-b border-default bg-base">
-                    <h2 className="text-sm font-semibold text-primary">
-                        {t('k8sConnections.title', {
-                            defaultValue: 'Kubernetes Connections',
-                        })}
-                    </h2>
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={handleCreate}
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-accent-primary hover:bg-accent-primary/90 text-inverse rounded-md transition-colors"
+        <Modal
+            isOpen={isOpen}
+            onClose={handleClose}
+            title={
+                connection
+                    ? t('k8sConnections.editTitle', {defaultValue: 'Edit Kubernetes connection'})
+                    : t('k8sConnections.newTitle', {defaultValue: 'New Kubernetes connection'})
+            }
+            icon={Boxes}
+            iconTone="accent"
+            size="md"
+            zIndex={zIndex}
+            busy={isActionPending}
+            bodyClassName="flex flex-col"
+            footerStart={
+                <>
+                    {connection && (
+                        <Button
+                            variant="ghost"
+                            className="-ml-1.5 hover:text-tint-danger-fg"
+                            icon={<Trash2 size={16} />}
+                            onClick={() => void handleDelete()}
+                            disabled={isActionPending}
                         >
-                            <Plus size={12} />
-                            {t('k8sConnections.add', {defaultValue: 'Add'})}
-                        </button>
-                        <button
-                            onClick={handleClose}
-                            className="p-1.5 text-muted hover:text-primary hover:bg-surface-secondary rounded-md transition-colors"
-                        >
-                            <X size={16} />
-                        </button>
-                    </div>
-                </div>
-
-                <div className="flex-1 overflow-y-auto p-5 space-y-3">
-                    {connections.map((connection) =>
-                        editingId === connection.id ? (
-                            <div
-                                key={connection.id}
-                                className="border border-accent-primary/30 rounded-lg p-4 bg-base/50 space-y-3"
-                            >
-                                <EditForm {...editFormProps} />
-                            </div>
-                        ) : (
-                            <div
-                                key={connection.id}
-                                className="flex items-center gap-3 p-3 rounded-lg bg-base border border-default hover:border-strong transition-colors"
-                            >
-                                <div className="flex-1 min-w-0">
-                                    <div className="text-sm font-medium text-primary truncate">
-                                        {connection.name}
-                                    </div>
-                                    <div className="text-xs text-muted truncate">
-                                        {connection.context}/{connection.namespace}/
-                                        {connection.resource_type}/{connection.resource_name}:
-                                        {connection.port}
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-1.5">
-                                    <button
-                                        onClick={() => handleEdit(connection)}
-                                        aria-label={t('common.edit')}
-                                        className="p-1.5 text-muted hover:text-primary hover:bg-surface-secondary rounded transition-colors"
-                                    >
-                                        <Edit2 size={14} />
-                                    </button>
-                                    <button
-                                        onClick={() => handleDelete(connection.id)}
-                                        aria-label={t('common.delete')}
-                                        className="p-1.5 text-muted hover:text-accent-error hover:bg-accent-error/10 rounded transition-colors"
-                                    >
-                                        <Trash2 size={14} />
-                                    </button>
-                                </div>
-                            </div>
-                        ),
+                            {t('common.delete')}
+                        </Button>
                     )}
-
-                    {isCreating && (
-                        <div className="border border-accent-primary/30 rounded-lg p-4 bg-base/50 space-y-3">
-                            <EditForm {...editFormProps} />
-                        </div>
-                    )}
-
-                    {connections.length === 0 && !isCreating && (
-                        <p className="text-xs text-muted italic text-center py-6">
-                            {t('k8sConnections.empty', {
-                                defaultValue:
-                                    'No Kubernetes connections saved. Click "Add" to create one.',
-                            })}
-                        </p>
-                    )}
-                </div>
-            </div>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => void handleTest()}
+                        disabled={!context || !namespace || isActionPending}
+                        icon={
+                            testStatus === 'testing' ? (
+                                <Loader2 size={14} className="animate-spin" />
+                            ) : (
+                                <Zap size={14} />
+                            )
+                        }
+                    >
+                        {t('k8sConnections.test')}
+                    </Button>
+                </>
+            }
+            footer={
+                <>
+                    <Button variant="outline" onClick={handleClose}>
+                        {t('common.cancel')}
+                    </Button>
+                    <Button onClick={() => void handleSave()} disabled={isActionPending}>
+                        {t('common.save')}
+                    </Button>
+                </>
+            }
+        >
+            <EditForm {...editFormProps} />
         </Modal>
     );
 }
@@ -807,10 +793,6 @@ interface EditFormProps {
     pathActionError: string | null;
     testStatus: 'idle' | 'testing' | 'success' | 'error';
     testMessage: string;
-    isActionPending: boolean;
-    onTest: () => void;
-    onSave: () => void;
-    onCancel: () => void;
 }
 
 function EditForm({
@@ -836,91 +818,69 @@ function EditForm({
     pathActionError,
     testStatus,
     testMessage,
-    isActionPending,
-    onTest,
-    onSave,
-    onCancel,
 }: EditFormProps) {
     const {t} = useTranslation();
+    const formError = validationError ?? pathActionError;
 
     return (
-        <div className="space-y-3">
-            <div>
-                <label className={LabelClass}>{t('k8sConnections.name')}</label>
-                <input
-                    autoCorrect="off"
-                    autoCapitalize="off"
-                    autoComplete="off"
-                    spellCheck={false}
+        <div className="flex flex-col gap-4">
+            <Field label={t('k8sConnections.name')}>
+                <Input
                     value={name}
                     onChange={(event) => setName(event.target.value)}
-                    className={InputClass}
                     placeholder={t('k8sConnections.namePlaceholder')}
                     autoFocus
                 />
-            </div>
+            </Field>
 
-            <K8sAdvancedSettings pathOverrides={pathOverrides} />
-
-            <div>
-                <label className={LabelClass}>{t('k8sConnections.context')}</label>
-                <Select
-                    value={context || null}
-                    options={contexts}
-                    onChange={onContextChange}
-                    placeholder={
-                        contexts.length === 0
-                            ? t('k8sConnections.noContexts')
-                            : t('k8sConnections.chooseContext')
-                    }
-                    searchPlaceholder={t('common.search')}
-                    noResultsLabel={t('common.noResults')}
-                />
-                {discoveryErrors.contexts && (
-                    <p role="alert" className="mt-1 text-xs text-accent-error">
-                        {discoveryErrors.contexts}
-                    </p>
-                )}
-            </div>
-
-            <div>
-                <label className={LabelClass}>{t('k8sConnections.namespace')}</label>
-                <Select
-                    value={namespace || null}
-                    options={namespaces}
-                    onChange={onNamespaceChange}
-                    placeholder={
-                        namespaces.length === 0
-                            ? t('k8sConnections.noNamespaces')
-                            : t('k8sConnections.chooseNamespace')
-                    }
-                    searchPlaceholder={t('common.search')}
-                    noResultsLabel={t('common.noResults')}
-                />
-                {discoveryErrors.namespaces && (
-                    <p role="alert" className="mt-1 text-xs text-accent-error">
-                        {discoveryErrors.namespaces}
-                    </p>
-                )}
-            </div>
-
-            <div className="flex gap-3">
-                <div className="flex-1">
-                    <label className={LabelClass}>{t('k8sConnections.resourceType')}</label>
+            <div className="grid grid-cols-2 gap-3">
+                <Field label={t('k8sConnections.context')} error={discoveryErrors.contexts}>
                     <Select
-                        value={resourceType}
-                        options={['service', 'pod']}
-                        labels={{
-                            service: t('k8sConnections.resourceTypeService'),
-                            pod: t('k8sConnections.resourceTypePod'),
-                        }}
-                        onChange={onResourceTypeChange}
-                        searchable={false}
+                        value={context || null}
+                        options={contexts}
+                        onChange={onContextChange}
+                        placeholder={
+                            contexts.length === 0
+                                ? t('k8sConnections.noContexts')
+                                : t('k8sConnections.chooseContext')
+                        }
+                        searchPlaceholder={t('common.search')}
+                        noResultsLabel={t('common.noResults')}
                     />
-                </div>
+                </Field>
+                <Field label={t('k8sConnections.namespace')} error={discoveryErrors.namespaces}>
+                    <Select
+                        value={namespace || null}
+                        options={namespaces}
+                        onChange={onNamespaceChange}
+                        placeholder={
+                            namespaces.length === 0
+                                ? t('k8sConnections.noNamespaces')
+                                : t('k8sConnections.chooseNamespace')
+                        }
+                        searchPlaceholder={t('common.search')}
+                        noResultsLabel={t('common.noResults')}
+                    />
+                </Field>
+            </div>
 
-                <div className="flex-1">
-                    <label className={LabelClass}>{t('k8sConnections.resourceName')}</label>
+            <div className="flex flex-col gap-1.5">
+                <span className="text-xs font-medium text-secondary">
+                    {t('k8sConnections.resourceType')}
+                </span>
+                <SegmentedControl
+                    ariaLabel={t('k8sConnections.resourceType')}
+                    value={resourceType}
+                    onChange={onResourceTypeChange}
+                    options={[
+                        {value: 'service', label: t('k8sConnections.resourceTypeService')},
+                        {value: 'pod', label: t('k8sConnections.resourceTypePod')},
+                    ]}
+                />
+            </div>
+
+            <div className="grid grid-cols-[1fr_120px] gap-3">
+                <Field label={t('k8sConnections.resourceName')} error={discoveryErrors.resources}>
                     <Select
                         value={resourceName || null}
                         options={resources}
@@ -933,94 +893,39 @@ function EditForm({
                         searchPlaceholder={t('common.search')}
                         noResultsLabel={t('common.noResults')}
                     />
-                    {discoveryErrors.resources && (
-                        <p role="alert" className="mt-1 text-xs text-accent-error">
-                            {discoveryErrors.resources}
-                        </p>
-                    )}
-                </div>
+                </Field>
+                <Field label={t('k8sConnections.port')}>
+                    <Input
+                        type="number"
+                        value={port ?? ''}
+                        onChange={(event) =>
+                            onPortChange(
+                                event.target.value === '' ? undefined : Number(event.target.value),
+                            )
+                        }
+                        placeholder={defaultPort != null ? String(defaultPort) : undefined}
+                    />
+                </Field>
             </div>
 
-            <div>
-                <label className={LabelClass}>{t('k8sConnections.port')}</label>
-                <input
-                    autoCorrect="off"
-                    autoCapitalize="off"
-                    autoComplete="off"
-                    spellCheck={false}
-                    type="number"
-                    value={port ?? ''}
-                    onChange={(event) =>
-                        onPortChange(
-                            event.target.value === '' ? undefined : Number(event.target.value),
-                        )
+            <K8sAdvancedSettings pathOverrides={pathOverrides} />
+
+            {(testStatus === 'success' || testStatus === 'error') && (
+                <InlineBanner
+                    tone={testStatus === 'success' ? 'green' : 'red'}
+                    role={testStatus === 'success' ? 'status' : 'alert'}
+                    icon={
+                        testStatus === 'success' ? <Check size={14} /> : <AlertCircle size={14} />
                     }
-                    className={InputClass}
-                    placeholder={defaultPort != null ? String(defaultPort) : undefined}
-                />
-            </div>
-
-            {testStatus !== 'idle' && (
-                <div
-                    className={clsx(
-                        'text-xs px-3 py-2 rounded-md',
-                        testStatus === 'testing' && 'text-muted',
-                        testStatus === 'success' && 'text-accent-success bg-accent-success/10',
-                        testStatus === 'error' && 'text-accent-error bg-accent-error/10',
-                    )}
                 >
-                    {testStatus === 'testing' && (
-                        <span className="flex items-center gap-1.5">
-                            <Loader2 size={12} className="animate-spin" />
-                            {t('k8sConnections.testing')}
-                        </span>
-                    )}
-                    {testStatus === 'success' && (
-                        <span className="flex items-center gap-1.5">
-                            <Check size={12} />
-                            {testMessage}
-                        </span>
-                    )}
-                    {testStatus === 'error' && (
-                        <span className="flex items-center gap-1.5">
-                            <XCircle size={12} />
-                            {testMessage}
-                        </span>
-                    )}
-                </div>
+                    {testMessage}
+                </InlineBanner>
             )}
-
-            {validationError && <p className="text-xs text-accent-error">{validationError}</p>}
-            {pathActionError && <p className="text-xs text-accent-error">{pathActionError}</p>}
-
-            <div className="flex items-center gap-2 pt-1">
-                <button
-                    onClick={onTest}
-                    disabled={!context || !namespace || isActionPending}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-surface-secondary hover:bg-surface-tertiary text-secondary rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                    {testStatus === 'testing' ? (
-                        <Loader2 size={12} className="animate-spin" />
-                    ) : (
-                        <Zap size={12} />
-                    )}
-                    {t('k8sConnections.test')}
-                </button>
-                <button
-                    onClick={onSave}
-                    disabled={isActionPending}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-accent-primary hover:bg-accent-primary/90 disabled:opacity-50 text-inverse rounded-md transition-colors"
-                >
-                    <Check size={12} />
-                    {t('common.save')}
-                </button>
-                <button
-                    onClick={onCancel}
-                    className="px-3 py-1.5 text-xs font-medium text-muted hover:text-secondary rounded-md transition-colors"
-                >
-                    {t('common.cancel')}
-                </button>
-            </div>
+            {formError && (
+                <InlineBanner tone="red" role="alert" icon={<AlertCircle size={14} />}>
+                    {formError}
+                </InlineBanner>
+            )}
         </div>
     );
 }

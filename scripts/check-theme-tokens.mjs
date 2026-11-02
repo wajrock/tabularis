@@ -85,7 +85,7 @@ const ALLOWLIST = {
         rules: ['hex'],
         reason: 'neutral fallback for drivers without an identity color',
     },
-    'src/components/modals/NewConnectionModal.tsx': {
+    'src/components/modals/NewConnectionModal/types.ts': {
         rules: ['hex'],
         reason: 'database paradigm identity colors',
     },
@@ -97,11 +97,11 @@ const ALLOWLIST = {
         rules: ['hex'],
         reason: 'database paradigm identity colors',
     },
-    'src/components/modals/NewConnectionModal/palette.ts': {
+    'src/components/modals/NewConnectionModal/appearance/palette.ts': {
         rules: ['hex'],
         reason: 'swatches the user picks for connections and tags',
     },
-    'src/components/modals/NewConnectionModal/AppearanceSection.tsx': {
+    'src/components/modals/NewConnectionModal/appearance/AppearanceEditor.tsx': {
         rules: ['hex', 'rgb'],
         reason: 'user-picked connection color and its neutral swatch shadows',
     },

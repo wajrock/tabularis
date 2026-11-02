@@ -1,7 +1,7 @@
 import type {ReactNode} from 'react';
 import {describe, it, expect, vi, beforeEach} from 'vitest';
 import {act, render, screen, fireEvent, waitFor} from '@testing-library/react';
-import {K8sConnectionsModal} from '@/components/modals/K8sConnectionsModal';
+import {K8sConnectionModal} from '@/components/modals/K8sConnectionModal';
 
 interface MockSelectProps {
     value: string | null;
@@ -54,8 +54,24 @@ const k8sMocks = vi.hoisted(() => ({
 }));
 
 vi.mock('@/components/ui/Modal', () => ({
-    Modal: ({isOpen, children}: {isOpen: boolean; children: ReactNode}) =>
-        isOpen ? <div data-testid="modal">{children}</div> : null,
+    Modal: ({
+        isOpen,
+        children,
+        footerStart,
+        footer,
+    }: {
+        isOpen: boolean;
+        children: ReactNode;
+        footerStart?: ReactNode;
+        footer?: ReactNode;
+    }) =>
+        isOpen ? (
+            <div data-testid="modal">
+                {children}
+                {footerStart}
+                {footer}
+            </div>
+        ) : null,
 }));
 
 vi.mock('@/components/ui/Select', () => ({
@@ -95,8 +111,19 @@ function openAdvancedSettings(): HTMLInputElement {
 }
 
 function renderModal(defaultPort: number | null) {
+    return render(<K8sConnectionModal isOpen={true} onClose={vi.fn()} defaultPort={defaultPort} />);
+}
+
+/** Opens the editor on the first connection the mocked loader returns. */
+async function renderSavedModal(defaultPort: number | null) {
+    const [connection] = await k8sMocks.loadK8sConnections();
     return render(
-        <K8sConnectionsModal isOpen={true} onClose={vi.fn()} defaultPort={defaultPort} />,
+        <K8sConnectionModal
+            isOpen={true}
+            onClose={vi.fn()}
+            connection={connection}
+            defaultPort={defaultPort}
+        />,
     );
 }
 
@@ -126,7 +153,7 @@ async function fillRequiredFields() {
     });
 }
 
-describe('K8sConnectionsModal port defaults', () => {
+describe('K8sConnectionModal port defaults', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         k8sMocks.loadK8sConnections.mockResolvedValue([]);
@@ -161,8 +188,6 @@ describe('K8sConnectionsModal port defaults', () => {
     it('does not fall back to MySQL port when the driver has no default port', () => {
         renderModal(null);
 
-        fireEvent.click(screen.getByText('k8sConnections.add'));
-
         const portInput = screen.getByRole('spinbutton') as HTMLInputElement;
         expect(portInput.value).toBe('');
         expect(portInput).not.toHaveAttribute('placeholder', '3306');
@@ -171,21 +196,19 @@ describe('K8sConnectionsModal port defaults', () => {
     it('tracks the current driver default port while the field is not overridden', () => {
         const onClose = vi.fn();
         const {rerender} = render(
-            <K8sConnectionsModal isOpen={true} onClose={onClose} defaultPort={3306} />,
+            <K8sConnectionModal isOpen={true} onClose={onClose} defaultPort={3306} />,
         );
 
-        fireEvent.click(screen.getByText('k8sConnections.add'));
         const portInput = screen.getByRole('spinbutton') as HTMLInputElement;
         expect(portInput.value).toBe('3306');
 
-        rerender(<K8sConnectionsModal isOpen={true} onClose={onClose} defaultPort={5432} />);
+        rerender(<K8sConnectionModal isOpen={true} onClose={onClose} defaultPort={5432} />);
         expect(portInput.value).toBe('5432');
     });
 
     it('clearing a manual port falls back to the provided driver default instead of 0', async () => {
         renderModal(15432);
 
-        fireEvent.click(screen.getByText('k8sConnections.add'));
         await fillRequiredFields();
 
         const portInput = screen.getByRole('spinbutton') as HTMLInputElement;
@@ -206,7 +229,6 @@ describe('K8sConnectionsModal port defaults', () => {
         k8sMocks.getK8sResourcePorts.mockResolvedValue([6543]);
         renderModal(15432);
 
-        fireEvent.click(screen.getByText('k8sConnections.add'));
         await fillRequiredFields();
 
         const portInput = screen.getByRole('spinbutton') as HTMLInputElement;
@@ -228,7 +250,6 @@ describe('K8sConnectionsModal port defaults', () => {
         k8sMocks.getK8sResourcePorts.mockReturnValue(ports.promise);
         renderModal(15432);
 
-        fireEvent.click(screen.getByText('k8sConnections.add'));
         await fillRequiredFields();
         await waitFor(() => {
             expect(k8sMocks.getK8sResourcePorts).toHaveBeenCalled();
@@ -244,7 +265,7 @@ describe('K8sConnectionsModal port defaults', () => {
     });
 });
 
-describe('K8sConnectionsModal advanced paths', () => {
+describe('K8sConnectionModal advanced paths', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         k8sMocks.loadK8sConnections.mockResolvedValue([]);
@@ -286,12 +307,7 @@ describe('K8sConnectionsModal advanced paths', () => {
                 kubeconfig_path: '/tmp/kubeconfig',
             },
         ]);
-        renderModal(15432);
-
-        await waitFor(() => {
-            expect(screen.getByText('Saved cluster')).toBeInTheDocument();
-        });
-        fireEvent.click(screen.getByLabelText('common.edit'));
+        await renderSavedModal(15432);
 
         await waitFor(() => {
             expect(k8sMocks.getK8sNamespaces).toHaveBeenCalledWith(
@@ -345,12 +361,7 @@ describe('K8sConnectionsModal advanced paths', () => {
                     ? Promise.resolve(undefined)
                     : Promise.reject(new Error('missing kubeconfig')),
         );
-        renderModal(15432);
-
-        await waitFor(() => {
-            expect(screen.getByText('Saved cluster')).toBeInTheDocument();
-        });
-        fireEvent.click(screen.getByLabelText('common.edit'));
+        await renderSavedModal(15432);
         const kubectlInput = openAdvancedSettings();
         fireEvent.change(kubectlInput, {target: {value: '/opt/kubectl'}});
         fireEvent.blur(kubectlInput);
@@ -385,12 +396,7 @@ describe('K8sConnectionsModal advanced paths', () => {
                 kubectl_path: '/old/kubectl',
             },
         ]);
-        renderModal(15432);
-
-        await waitFor(() => {
-            expect(screen.getByText('Saved cluster')).toBeInTheDocument();
-        });
-        fireEvent.click(screen.getByLabelText('common.edit'));
+        await renderSavedModal(15432);
         const kubectlInput = openAdvancedSettings();
         fireEvent.click(screen.getByText('k8sConnections.test'));
         await waitFor(() => {
@@ -432,12 +438,7 @@ describe('K8sConnectionsModal advanced paths', () => {
                     kubectl_path: '/opt/kubectl',
                 },
             ]);
-            renderModal(15432);
-
-            await waitFor(() => {
-                expect(screen.getByText('Saved cluster')).toBeInTheDocument();
-            });
-            fireEvent.click(screen.getByLabelText('common.edit'));
+            await renderSavedModal(15432);
             await waitFor(() => {
                 expect(screen.getByRole('option', {name: 'ctx-next'})).toBeInTheDocument();
             });
@@ -445,8 +446,8 @@ describe('K8sConnectionsModal advanced paths', () => {
             await waitFor(() => {
                 expect(k8sMocks.validateK8sPath).toHaveBeenCalledWith('/opt/kubectl', 'kubectl');
             });
-            expect(screen.getByText('k8sConnections.test')).toBeDisabled();
-            expect(screen.getByText('common.save')).toBeDisabled();
+            expect(screen.getByRole('button', {name: 'k8sConnections.test'})).toBeDisabled();
+            expect(screen.getByRole('button', {name: 'common.save'})).toBeDisabled();
 
             fireEvent.change(screen.getByLabelText('k8sConnections.chooseContext'), {
                 target: {value: 'ctx-next'},
@@ -456,7 +457,7 @@ describe('K8sConnectionsModal advanced paths', () => {
             });
 
             await waitFor(() => {
-                expect(screen.getByText('common.save')).not.toBeDisabled();
+                expect(screen.getByRole('button', {name: 'common.save'})).not.toBeDisabled();
             });
             if (action === 'test') {
                 expect(k8sMocks.testK8sConnection).not.toHaveBeenCalled();
@@ -465,42 +466,6 @@ describe('K8sConnectionsModal advanced paths', () => {
             }
         },
     );
-
-    it('does not reset a superseding form when an older save completes', async () => {
-        const update = createDeferred<void>();
-        k8sMocks.updateK8sConnection.mockReturnValue(update.promise);
-        k8sMocks.loadK8sConnections.mockResolvedValue([
-            {
-                id: 'saved',
-                name: 'Saved cluster',
-                context: 'ctx',
-                namespace: 'db',
-                resource_type: 'service',
-                resource_name: 'mysql-svc',
-                port: 6543,
-            },
-        ]);
-        renderModal(15432);
-
-        await waitFor(() => {
-            expect(screen.getByText('Saved cluster')).toBeInTheDocument();
-        });
-        fireEvent.click(screen.getByLabelText('common.edit'));
-        fireEvent.click(screen.getByText('common.save'));
-        await waitFor(() => {
-            expect(k8sMocks.updateK8sConnection).toHaveBeenCalled();
-        });
-
-        fireEvent.click(screen.getByText('k8sConnections.add'));
-        expect(screen.getByPlaceholderText('k8sConnections.namePlaceholder')).toHaveValue('');
-        await act(async () => {
-            update.resolve();
-        });
-
-        await waitFor(() => {
-            expect(screen.getByPlaceholderText('k8sConnections.namePlaceholder')).toHaveValue('');
-        });
-    });
 
     it('suppresses stale namespace and resource discovery results', async () => {
         const firstNamespaces = createDeferred<string[]>();
@@ -511,7 +476,6 @@ describe('K8sConnectionsModal advanced paths', () => {
         );
         renderModal(15432);
 
-        fireEvent.click(screen.getByText('k8sConnections.add'));
         await waitFor(() => {
             expect(screen.getByRole('option', {name: 'ctx-a'})).toBeInTheDocument();
         });
@@ -567,7 +531,6 @@ describe('K8sConnectionsModal advanced paths', () => {
         k8sMocks.testK8sConnection.mockReturnValue(testResult.promise);
         renderModal(15432);
 
-        fireEvent.click(screen.getByText('k8sConnections.add'));
         await fillRequiredFields();
         fireEvent.click(screen.getByText('k8sConnections.test'));
         await waitFor(() => {
@@ -589,7 +552,6 @@ describe('K8sConnectionsModal advanced paths', () => {
         k8sMocks.testK8sConnection.mockReturnValue(testResult.promise);
         renderModal(15432);
 
-        fireEvent.click(screen.getByText('k8sConnections.add'));
         await fillRequiredFields();
         fireEvent.click(screen.getByText('k8sConnections.test'));
         await waitFor(() => {
@@ -611,7 +573,6 @@ describe('K8sConnectionsModal advanced paths', () => {
         k8sMocks.testK8sConnection.mockReturnValue(testResult.promise);
         renderModal(15432);
 
-        fireEvent.click(screen.getByText('k8sConnections.add'));
         await fillRequiredFields();
         fireEvent.click(screen.getByText('k8sConnections.test'));
         await waitFor(() => {
@@ -631,7 +592,6 @@ describe('K8sConnectionsModal advanced paths', () => {
         k8sMocks.validateK8sPath.mockRejectedValue(new Error('invalid kubectl'));
         renderModal(15432);
 
-        fireEvent.click(screen.getByText('k8sConnections.add'));
         await fillRequiredFields();
         const kubectlInput = openAdvancedSettings();
         fireEvent.change(kubectlInput, {target: {value: '/bad/kubectl'}});
@@ -655,10 +615,8 @@ describe('K8sConnectionsModal advanced paths', () => {
     it('resets dependent selections and ports when applied paths change', async () => {
         renderModal(15432);
 
-        fireEvent.click(screen.getByText('k8sConnections.add'));
         await fillRequiredFields();
-        const selectsBeforeApply = screen.getAllByRole('combobox') as HTMLSelectElement[];
-        fireEvent.change(selectsBeforeApply[2], {target: {value: 'pod'}});
+        fireEvent.click(screen.getByRole('radio', {name: 'k8sConnections.resourceTypePod'}));
         const portInput = screen.getByRole('spinbutton') as HTMLInputElement;
         fireEvent.change(portInput, {target: {value: '7777'}});
 
@@ -674,8 +632,10 @@ describe('K8sConnectionsModal advanced paths', () => {
         const selects = screen.getAllByRole('combobox') as HTMLSelectElement[];
         expect(selects[0]).toHaveValue('');
         expect(selects[1]).toHaveValue('');
-        expect(selects[2]).toHaveValue('service');
-        expect(selects[3]).toHaveValue('');
+        expect(
+            screen.getByRole('radio', {name: 'k8sConnections.resourceTypeService'}),
+        ).toHaveAttribute('aria-checked', 'true');
+        expect(selects[2]).toHaveValue('');
         expect(portInput).toHaveValue(15432);
 
         await fillRequiredFields();
@@ -698,7 +658,6 @@ describe('K8sConnectionsModal advanced paths', () => {
     it('blocks a submit that applies new paths until selections are made again', async () => {
         renderModal(15432);
 
-        fireEvent.click(screen.getByText('k8sConnections.add'));
         await fillRequiredFields();
         const kubectlInput = openAdvancedSettings();
         fireEvent.change(kubectlInput, {target: {value: '/opt/kubectl'}});
@@ -716,8 +675,9 @@ describe('K8sConnectionsModal advanced paths', () => {
             errorKey: 'k8sConnections.errors.nameRequired',
         });
         renderModal(15432);
+        // The form initializes right after it opens.
+        await waitFor(() => expect(k8sMocks.getK8sContexts).toHaveBeenCalled());
 
-        fireEvent.click(screen.getByText('k8sConnections.add'));
         fireEvent.click(screen.getByText('common.save'));
         await waitFor(() => {
             expect(screen.getByText('k8sConnections.errors.nameRequired')).toBeInTheDocument();

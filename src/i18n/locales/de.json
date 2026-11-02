@@ -582,6 +582,7 @@
     "maskingPatternsDesc": "Ein Muster pro Zeile. Eine Spalte wird maskiert, wenn ihr Name ein Muster enthält (Groß-/Kleinschreibung wird ignoriert).",
     "maskingOverrides": "Ausnahmen pro Verbindung",
     "maskingOverridesDesc": "Erzwingt das Maskieren (Einschließen) oder Nicht-Maskieren (Ausschließen) bestimmter Spalten für eine Verbindung. Ein Eintrag tabelle.spalte pro Zeile; Ausschlüsse haben Vorrang vor Einschlüssen und Mustern.",
+    "maskingDisabledNotice": "Die Spaltenmaskierung ist unter Einstellungen → Datenschutz deaktiviert, daher werden diese Listen nicht angewendet.",
     "maskingConnection": "Verbindung",
     "maskingConnectionDesc": "Wählen Sie, für welche Verbindung diese Ausnahmen gelten.",
     "maskingInclude": "Immer maskieren",
@@ -1154,6 +1155,12 @@
     "configError": "Bitte konfiguriere einen KI-Anbieter in den Einstellungen und gib einen Prompt ein."
   },
   "newConnection": {
+    "sections": "Abschnitte",
+    "sectionGroups": {
+      "connection": "Verbindung",
+      "network": "Netzwerk & Sicherheit",
+      "more": "Weitere"
+    },
     "ssmForwardHint": "Wird zu {{document}} aufgelöst - leitet über den verwalteten Knoten an {{host}}:{{port}} weiter. Die Zieladresse wird im Tab „Allgemein“ geändert; ein Loopback-Host bedeutet den Knoten selbst.",
     "ssmIamHint": "Erfordert ssm:StartSession für das Ziel und für das aufgelöste Dokument.",
     "ssmNotAvailable": "AWS SSM ist für diesen Treiber nicht verfügbar.",
@@ -1164,7 +1171,7 @@
     "ssmTargetRequired": "Geben Sie den verwalteten Knoten an, über den verbunden werden soll.",
     "testSsm": "SSM testen",
     "testSsmHint": "Öffnet eine echte Portweiterleitungssitzung und schließt sie wieder, ohne eine Verbindung zur Datenbank herzustellen.",
-    "useSsm": "AWS-SSM-Portweiterleitung verwenden",
+    "useSsm": "AWS-SSM-Portweiterleitung aktivieren",
     "titleNew": "Neue Verbindung",
     "titleEdit": "Verbindung bearbeiten",
     "subtitle": "Datenbankverbindungseinstellungen konfigurieren",
@@ -1207,7 +1214,7 @@
     "inMemoryDatabaseHint": "Öffnet eine temporäre Datenbank, die nur existiert, solange der Treiber läuft",
     "createSqliteFile": "Neu",
     "browseFolder": "Ordner auswählen",
-    "useSsh": "SSH-Tunnel verwenden",
+    "useSsh": "SSH-Tunnel aktivieren",
     "sshHost": "SSH-Host",
     "sshPort": "SSH-Port",
     "sshUser": "SSH-Benutzer",
@@ -1225,8 +1232,8 @@
     "save": "Speichern",
     "failSave": "Speichern der Verbindung fehlgeschlagen",
     "selectSshConnection": "SSH-Verbindung auswählen",
-    "useSshConnection": "Vorhandene SSH-Verbindung verwenden",
-    "createInlineSsh": "SSH inline konfigurieren",
+    "useSshConnection": "Gespeicherter Tunnel",
+    "createInlineSsh": "Benutzerdefiniert",
     "manageSshConnections": "SSH-Verbindungen verwalten",
     "noSshConnections": "Keine SSH-Verbindungen verfügbar",
     "sslMode": "SSL-Modus",
@@ -1249,7 +1256,7 @@
     "chooseK8s": "Verbindung auswählen...",
     "chooseNamespace": "Namespace auswählen...",
     "chooseResource": "Ressource auswählen...",
-    "createInlineK8s": "Inline",
+    "createInlineK8s": "Benutzerdefiniert",
     "k8sContext": "Kontext",
     "k8sNamespace": "Namespace",
     "k8sNotAvailable": "Kubernetes ist für diesen Treiber nicht verfügbar.",
@@ -1265,7 +1272,7 @@
     "selectContextFirst": "Zuerst einen Kontext auswählen",
     "selectK8sConnection": "K8s-Verbindung auswählen",
     "selectTypeFirst": "Zuerst Kontext/Namespace/Typ auswählen",
-    "useK8s": "Kubernetes-Port-Forward verwenden",
+    "useK8s": "Kubernetes-Port-Forward aktivieren",
     "useK8sConnection": "Gespeicherte Verbindung",
     "startupScript": "Startskript",
     "startupScriptDescription": "SQL, das bei jeder neuen Verbindung zu dieser Datenquelle ausgeführt wird. Verwenden Sie es für Sitzungseinstellungen wie SET / set_config (z. B. zum Umgehen von RLS). Trennen Sie Anweisungen mit Semikolons.",
@@ -1277,8 +1284,6 @@
       "transaction": "PgBouncer Transaktion",
       "session": "PgBouncer Sitzung"
     },
-    "scrollTabsLeft": "Registerkarten nach links blättern",
-    "scrollTabsRight": "Registerkarten nach rechts blättern",
     "useIamAuth": "AWS-IAM-Authentifizierung verwenden (RDS)",
     "useIamAuthHint": "Das Passwortfeld wird als RDS-Auth-Token verwendet (aus `aws rds generate-db-auth-token`). Erfordert TLS. Tokens laufen alle 15 Minuten ab.",
     "useIamAuthTlsRequired": "Aktiviere oben einen SSL-Modus, um die AWS-IAM-Authentifizierung zu nutzen.",
@@ -1296,6 +1301,9 @@
     "loadDatabasesHint": "Auf „Datenbanken laden“ klicken, um die verfügbaren Datenbanken abzurufen."
   },
   "sshConnections": {
+    "new": "Neu",
+    "newTitle": "Neue SSH-Verbindung",
+    "editTitle": "SSH-Verbindung bearbeiten",
     "title": "SSH-Verbindungen",
     "createNew": "Neue SSH-Verbindung erstellen",
     "noConnections": "Noch keine SSH-Verbindungen konfiguriert",
@@ -2430,6 +2438,8 @@
     "dismiss": "Schließen"
   },
   "k8sConnections": {
+    "newTitle": "Neue Kubernetes-Verbindung",
+    "editTitle": "Kubernetes-Verbindung bearbeiten",
     "title": "Kubernetes-Verbindungen",
     "add": "Hinzufügen",
     "empty": "Keine Kubernetes-Verbindungen gespeichert. Klicke auf „Hinzufügen“, um eine zu erstellen.",

@@ -542,6 +542,7 @@
     "maskingPatternsDesc": "한 줄에 하나의 패턴. 열 이름에 패턴이 포함되면 마스킹됩니다(대소문자 구분 안 함).",
     "maskingOverrides": "연결별 재정의",
     "maskingOverridesDesc": "특정 연결에서 지정한 열을 항상 마스킹(포함)하거나 마스킹하지 않도록(제외) 설정합니다. 한 줄에 테이블.열 하나씩 입력하며, 제외가 포함과 패턴보다 우선합니다.",
+    "maskingDisabledNotice": "열 마스킹이 설정 → 개인정보 보호에서 꺼져 있어 이 목록은 적용되지 않습니다.",
     "maskingConnection": "연결",
     "maskingConnectionDesc": "이 재정의를 적용할 연결을 선택합니다.",
     "maskingInclude": "항상 마스킹",
@@ -1126,6 +1127,12 @@
     "configError": "설정에서 AI 제공자를 구성하고 프롬프트를 입력하세요."
   },
   "newConnection": {
+    "sections": "섹션",
+    "sectionGroups": {
+      "connection": "연결",
+      "network": "네트워크 및 보안",
+      "more": "기타"
+    },
     "ssmForwardHint": "{{document}}(으)로 확인됩니다. 관리형 노드를 통해 {{host}}:{{port}}(으)로 전달합니다. 대상 주소는 일반 탭에서 변경하세요. 루프백 호스트는 노드 자체를 의미합니다.",
     "ssmIamHint": "대상과 확인된 문서에 대한 ssm:StartSession 권한이 필요합니다.",
     "ssmNotAvailable": "이 드라이버에서는 AWS SSM을 사용할 수 없습니다.",
@@ -1197,8 +1204,8 @@
     "save": "저장",
     "failSave": "연결 저장에 실패했습니다",
     "selectSshConnection": "SSH 연결 선택",
-    "useSshConnection": "기존 SSH 연결 사용",
-    "createInlineSsh": "SSH 인라인 설정",
+    "useSshConnection": "저장된 터널",
+    "createInlineSsh": "사용자 지정",
     "manageSshConnections": "SSH 연결 관리",
     "noSshConnections": "사용 가능한 SSH 연결이 없습니다",
     "sslMode": "SSL 모드",
@@ -1221,7 +1228,7 @@
     "chooseK8s": "연결 선택...",
     "chooseNamespace": "네임스페이스 선택...",
     "chooseResource": "리소스 선택...",
-    "createInlineK8s": "인라인",
+    "createInlineK8s": "사용자 지정",
     "k8sContext": "컨텍스트",
     "k8sNamespace": "네임스페이스",
     "k8sNotAvailable": "이 드라이버에서는 Kubernetes를 사용할 수 없습니다.",
@@ -1249,8 +1256,6 @@
       "transaction": "PgBouncer 트랜잭션",
       "session": "PgBouncer 세션"
     },
-    "scrollTabsLeft": "탭 왼쪽으로 스크롤",
-    "scrollTabsRight": "탭 오른쪽으로 스크롤",
     "useIamAuth": "AWS IAM 인증 사용 (RDS)",
     "useIamAuthHint": "비밀번호 필드는 RDS 인증 토큰(`aws rds generate-db-auth-token`으로 생성)으로 처리됩니다. TLS가 필요합니다. 토큰은 15분마다 만료됩니다.",
     "useIamAuthTlsRequired": "AWS IAM 인증을 사용하려면 위에서 SSL 모드를 활성화하세요.",
@@ -1267,6 +1272,9 @@
     "loadDatabasesHint": "데이터베이스 불러오기를 클릭하여 사용 가능한 데이터베이스를 가져오세요."
   },
   "sshConnections": {
+    "new": "새로 만들기",
+    "newTitle": "새 SSH 연결",
+    "editTitle": "SSH 연결 편집",
     "title": "SSH 연결",
     "createNew": "새 SSH 연결 만들기",
     "noConnections": "아직 설정된 SSH 연결이 없습니다",
@@ -2447,6 +2455,8 @@
     "dismiss": "닫기"
   },
   "k8sConnections": {
+    "newTitle": "새 Kubernetes 연결",
+    "editTitle": "Kubernetes 연결 편집",
     "title": "Kubernetes 연결",
     "add": "추가",
     "empty": "저장된 Kubernetes 연결이 없습니다. \"추가\"를 클릭하여 만드세요.",

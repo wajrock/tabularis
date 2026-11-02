@@ -6,7 +6,7 @@ import {useConnectionTags} from '@/hooks/useConnectionTags';
 import type {ConnectionTag} from '@/types/tags';
 import {toErrorMessage} from '@/utils/errors';
 import {ConfirmModal} from '@/components/modals/ConfirmModal';
-import {PALETTE} from './palette';
+import {PALETTE} from '@/components/modals/NewConnectionModal/appearance/palette';
 
 /** Mirrors MAX_TAG_NAME_CHARS enforced by the backend. */
 const MAX_TAG_NAME_CHARS = 32;

@@ -1,6 +1,6 @@
 import {describe, it, expect, vi} from 'vitest';
 import {render, screen, fireEvent, waitFor} from '@testing-library/react';
-import {AppearanceSection} from '@/components/modals/NewConnectionModal/AppearanceSection';
+import {AppearanceEditor} from '@/components/modals/NewConnectionModal/appearance/AppearanceEditor';
 
 // Mock react-i18next so the section renders predictably regardless of locale files
 vi.mock('react-i18next', () => ({
@@ -19,7 +19,6 @@ vi.mock('@tauri-apps/api/core', () => ({
 vi.mock('emoji-picker-react', () => ({
     default: ({onEmojiClick}: {onEmojiClick: (e: {emoji: string}) => void}) => (
         <div data-testid="emoji-picker">
-            <input aria-label="emoji search" />
             <button
                 type="button"
                 aria-label="pick elephant"
@@ -30,6 +29,17 @@ vi.mock('emoji-picker-react', () => ({
         </div>
     ),
     Theme: {DARK: 'dark', LIGHT: 'light', AUTO: 'auto'},
+    Categories: {
+        SUGGESTED: 'suggested',
+        SMILEYS_PEOPLE: 'smileys_people',
+        ANIMALS_NATURE: 'animals_nature',
+        FOOD_DRINK: 'food_drink',
+        TRAVEL_PLACES: 'travel_places',
+        ACTIVITIES: 'activities',
+        OBJECTS: 'objects',
+        SYMBOLS: 'symbols',
+        FLAGS: 'flags',
+    },
     EmojiStyle: {
         NATIVE: 'native',
         APPLE: 'apple',
@@ -41,15 +51,15 @@ vi.mock('emoji-picker-react', () => ({
     SkinTonePickerLocation: {SEARCH: 'search', PREVIEW: 'preview'},
 }));
 
-describe('AppearanceSection — color', () => {
+describe('AppearanceEditor — color', () => {
     it('renders 12 swatches', () => {
-        render(<AppearanceSection value={{}} onChange={() => {}} connectionId="1" />);
+        render(<AppearanceEditor value={{}} onChange={() => {}} connectionId="1" />);
         expect(screen.getAllByRole('button', {name: /color swatch/i})).toHaveLength(12);
     });
 
     it('emits accentColor on swatch click', () => {
         const onChange = vi.fn();
-        render(<AppearanceSection value={{}} onChange={onChange} connectionId="1" />);
+        render(<AppearanceEditor value={{}} onChange={onChange} connectionId="1" />);
         fireEvent.click(screen.getAllByRole('button', {name: /color swatch/i})[0]);
         expect(onChange).toHaveBeenCalledWith(
             expect.objectContaining({
@@ -61,7 +71,7 @@ describe('AppearanceSection — color', () => {
     it('clears appearance entirely when reset on color-only state', () => {
         const onChange = vi.fn();
         render(
-            <AppearanceSection
+            <AppearanceEditor
                 value={{accentColor: '#ff0000'}}
                 onChange={onChange}
                 connectionId="1"
@@ -74,7 +84,7 @@ describe('AppearanceSection — color', () => {
     it('keeps icon when only color is reset', () => {
         const onChange = vi.fn();
         render(
-            <AppearanceSection
+            <AppearanceEditor
                 value={{accentColor: '#ff0000', icon: {type: 'pack', id: 'server'}}}
                 onChange={onChange}
                 connectionId="1"
@@ -85,14 +95,14 @@ describe('AppearanceSection — color', () => {
     });
 
     it('opens the custom panel with hex input + picker', () => {
-        render(<AppearanceSection value={{}} onChange={() => {}} connectionId="1" />);
+        render(<AppearanceEditor value={{}} onChange={() => {}} connectionId="1" />);
         fireEvent.click(screen.getByRole('button', {name: /custom color/i}));
         expect(screen.getByLabelText(/custom hex input/i)).toBeInTheDocument();
     });
 
     it('emits accentColor when valid hex is typed into the input', () => {
         const onChange = vi.fn();
-        render(<AppearanceSection value={{}} onChange={onChange} connectionId="1" />);
+        render(<AppearanceEditor value={{}} onChange={onChange} connectionId="1" />);
         fireEvent.click(screen.getByRole('button', {name: /custom color/i}));
         const input = screen.getByLabelText(/custom hex input/i);
         fireEvent.change(input, {target: {value: 'abc123'}});
@@ -101,7 +111,7 @@ describe('AppearanceSection — color', () => {
 
     it('filters non-hex characters from input (react-colorful behavior)', () => {
         const onChange = vi.fn();
-        render(<AppearanceSection value={{}} onChange={onChange} connectionId="1" />);
+        render(<AppearanceEditor value={{}} onChange={onChange} connectionId="1" />);
         fireEvent.click(screen.getByRole('button', {name: /custom color/i}));
         const input = screen.getByLabelText(/custom hex input/i);
         fireEvent.change(input, {target: {value: 'garbage'}});
@@ -118,19 +128,19 @@ describe('AppearanceSection — color', () => {
     });
 });
 
-describe('AppearanceSection — icon tabs', () => {
+describe('AppearanceEditor — icon tabs', () => {
     it('renders 4 tabs', () => {
-        render(<AppearanceSection value={{}} onChange={() => {}} connectionId="1" />);
-        expect(screen.getByRole('tab', {name: /default/i})).toBeInTheDocument();
-        expect(screen.getByRole('tab', {name: /pack/i})).toBeInTheDocument();
-        expect(screen.getByRole('tab', {name: /emoji/i})).toBeInTheDocument();
-        expect(screen.getByRole('tab', {name: /image/i})).toBeInTheDocument();
+        render(<AppearanceEditor value={{}} onChange={() => {}} connectionId="1" />);
+        expect(screen.getByRole('radio', {name: /default/i})).toBeInTheDocument();
+        expect(screen.getByRole('radio', {name: /pack/i})).toBeInTheDocument();
+        expect(screen.getByRole('radio', {name: /emoji/i})).toBeInTheDocument();
+        expect(screen.getByRole('radio', {name: /image/i})).toBeInTheDocument();
     });
 
     it('picks a pack icon and emits IconOverride', () => {
         const onChange = vi.fn();
-        render(<AppearanceSection value={{}} onChange={onChange} connectionId="1" />);
-        fireEvent.click(screen.getByRole('tab', {name: /pack/i}));
+        render(<AppearanceEditor value={{}} onChange={onChange} connectionId="1" />);
+        fireEvent.click(screen.getByRole('radio', {name: /pack/i}));
         fireEvent.click(screen.getByRole('button', {name: 'pick-server'}));
         expect(onChange).toHaveBeenCalledWith({icon: {type: 'pack', id: 'server'}});
     });
@@ -138,29 +148,29 @@ describe('AppearanceSection — icon tabs', () => {
     it('clears the icon override when the Default tab is clicked', () => {
         const onChange = vi.fn();
         render(
-            <AppearanceSection
+            <AppearanceEditor
                 value={{icon: {type: 'emoji', value: '🐘'}}}
                 onChange={onChange}
                 connectionId="1"
             />,
         );
-        fireEvent.click(screen.getByRole('tab', {name: /default/i}));
+        fireEvent.click(screen.getByRole('radio', {name: /default/i}));
         // Clicking the Default tab is itself the reset action — no extra button click needed.
         expect(onChange).toHaveBeenCalledWith({});
     });
 
     it('does not call onChange when Default tab is clicked with no existing override', () => {
         const onChange = vi.fn();
-        render(<AppearanceSection value={{}} onChange={onChange} connectionId="1" />);
-        fireEvent.click(screen.getByRole('tab', {name: /default/i}));
+        render(<AppearanceEditor value={{}} onChange={onChange} connectionId="1" />);
+        fireEvent.click(screen.getByRole('radio', {name: /default/i}));
         expect(onChange).not.toHaveBeenCalled();
     });
 
     it('uploads an image and stores the returned path', async () => {
         const onChange = vi.fn();
         const {invoke} = await import('@tauri-apps/api/core');
-        render(<AppearanceSection value={{}} onChange={onChange} connectionId="conn1" />);
-        fireEvent.click(screen.getByRole('tab', {name: /image/i}));
+        render(<AppearanceEditor value={{}} onChange={onChange} connectionId="conn1" />);
+        fireEvent.click(screen.getByRole('radio', {name: /image/i}));
         fireEvent.click(screen.getByRole('button', {name: /choose image/i}));
         // Wait for the async upload to resolve
         await waitFor(() => {
@@ -182,14 +192,14 @@ describe('AppearanceSection — icon tabs', () => {
         const {invoke} = await import('@tauri-apps/api/core');
         vi.mocked(invoke).mockClear();
         render(
-            <AppearanceSection
+            <AppearanceEditor
                 value={{icon: {type: 'image', path: 'connection-icons/old-1234.png'}}}
                 onChange={onChange}
                 connectionId="conn1"
                 onImageUploaded={onImageUploaded}
             />,
         );
-        fireEvent.click(screen.getByRole('tab', {name: /image/i}));
+        fireEvent.click(screen.getByRole('radio', {name: /image/i}));
         fireEvent.click(screen.getByRole('button', {name: /choose image/i}));
         await waitFor(() => {
             expect(invoke).toHaveBeenCalledWith('save_connection_icon', expect.any(Object));
@@ -206,16 +216,16 @@ describe('AppearanceSection — icon tabs', () => {
     // ── emoji-picker-react emoji picker ──
 
     it('renders emoji picker with search', () => {
-        render(<AppearanceSection value={{}} onChange={() => {}} connectionId="1" />);
-        fireEvent.click(screen.getByRole('tab', {name: /emoji/i}));
+        render(<AppearanceEditor value={{}} onChange={() => {}} connectionId="1" />);
+        fireEvent.click(screen.getByRole('radio', {name: /emoji/i}));
         expect(screen.getByTestId('emoji-picker')).toBeInTheDocument();
         expect(screen.getByLabelText(/emoji search/i)).toBeInTheDocument();
     });
 
     it('emits emoji icon when picker fires onEmojiClick', () => {
         const onChange = vi.fn();
-        render(<AppearanceSection value={{}} onChange={onChange} connectionId="1" />);
-        fireEvent.click(screen.getByRole('tab', {name: /emoji/i}));
+        render(<AppearanceEditor value={{}} onChange={onChange} connectionId="1" />);
+        fireEvent.click(screen.getByRole('radio', {name: /emoji/i}));
         // Clicking the mock emoji button triggers onEmojiClick({ emoji: "🐘" })
         fireEvent.click(screen.getByRole('button', {name: /pick elephant/i}));
         expect(onChange).toHaveBeenCalledWith({icon: {type: 'emoji', value: '🐘'}});
@@ -224,8 +234,8 @@ describe('AppearanceSection — icon tabs', () => {
     // ── Icon search ──
 
     it('filters pack icons by search term', () => {
-        render(<AppearanceSection value={{}} onChange={() => {}} connectionId="1" />);
-        fireEvent.click(screen.getByRole('tab', {name: /pack/i}));
+        render(<AppearanceEditor value={{}} onChange={() => {}} connectionId="1" />);
+        fireEvent.click(screen.getByRole('radio', {name: /pack/i}));
         const allInitial = screen.getAllByRole('button', {name: /^pick-/i});
         // The mocked dynamicIconImports has 5 icons (all shown since < RESULT_LIMIT of 120)
         expect(allInitial.length).toBeGreaterThan(0);
@@ -240,38 +250,38 @@ describe('AppearanceSection — icon tabs', () => {
 
     it('switches to matching tab when value.icon changes externally (edit mode)', () => {
         const {rerender} = render(
-            <AppearanceSection value={{}} onChange={() => {}} connectionId="1" />,
+            <AppearanceEditor value={{}} onChange={() => {}} connectionId="1" />,
         );
-        expect(screen.getByRole('tab', {name: /default/i})).toHaveAttribute(
-            'aria-selected',
+        expect(screen.getByRole('radio', {name: /default/i})).toHaveAttribute(
+            'aria-checked',
             'true',
         );
         rerender(
-            <AppearanceSection
+            <AppearanceEditor
                 value={{icon: {type: 'pack', id: 'server'}}}
                 onChange={() => {}}
                 connectionId="1"
             />,
         );
-        expect(screen.getByRole('tab', {name: /pack/i})).toHaveAttribute('aria-selected', 'true');
+        expect(screen.getByRole('radio', {name: /pack/i})).toHaveAttribute('aria-checked', 'true');
     });
 
     it('resets to derived tab when value.icon type changes externally after a user click', () => {
         const {rerender} = render(
-            <AppearanceSection value={{}} onChange={() => {}} connectionId="1" />,
+            <AppearanceEditor value={{}} onChange={() => {}} connectionId="1" />,
         );
         // User explicitly clicks emoji tab
-        fireEvent.click(screen.getByRole('tab', {name: /emoji/i}));
-        expect(screen.getByRole('tab', {name: /emoji/i})).toHaveAttribute('aria-selected', 'true');
+        fireEvent.click(screen.getByRole('radio', {name: /emoji/i}));
+        expect(screen.getByRole('radio', {name: /emoji/i})).toHaveAttribute('aria-checked', 'true');
         // External change: parent sets a pack icon (different type)
         rerender(
-            <AppearanceSection
+            <AppearanceEditor
                 value={{icon: {type: 'pack', id: 'server'}}}
                 onChange={() => {}}
                 connectionId="1"
             />,
         );
         // Tab must follow the new icon type, not stay stuck on the user's previous choice
-        expect(screen.getByRole('tab', {name: /pack/i})).toHaveAttribute('aria-selected', 'true');
+        expect(screen.getByRole('radio', {name: /pack/i})).toHaveAttribute('aria-checked', 'true');
     });
 });

@@ -64,7 +64,7 @@ describe('ConnectionCatalogue', () => {
                 onSelect={vi.fn()}
             />,
         );
-        fireEvent.click(screen.getByRole('button', {name: /SQL/i}));
+        fireEvent.click(screen.getByRole('radio', {name: /SQL/i}));
         expect(screen.getByText('PostgreSQL')).toBeInTheDocument();
         expect(screen.queryByText('Qdrant')).not.toBeInTheDocument();
     });

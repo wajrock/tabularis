@@ -796,17 +796,17 @@ select option:active {
     animation: fade-in 150ms ease-in;
 }
 
-/* emoji-picker-react theme override — match Tabularis dark theme */
+/* emoji-picker-react theme override — follows the theme tokens */
 .emoji-picker-wrap .EmojiPickerReact {
     --epr-bg-color: var(--bg-base);
     --epr-category-label-bg-color: var(--bg-base);
     --epr-picker-border-color: transparent;
-    --epr-search-input-bg-color: var(--bg-elevated);
-    --epr-search-input-bg-color-active: var(--bg-elevated);
+    --epr-search-input-bg-color: var(--bg-base);
+    --epr-search-input-bg-color-active: var(--bg-base);
     --epr-search-input-border-color: var(--border-strong);
     --epr-search-input-placeholder-color: var(--text-muted, #94a3b8);
     --epr-search-input-text-color: var(--text-primary, #e2e8f0);
-    --epr-hover-bg-color: var(--surface-secondary);
+    --epr-hover-bg-color: var(--surface-hover);
     --epr-focus-bg-color: var(--surface-secondary);
     --epr-highlight-color: var(--accent-primary, #3b82f6);
     --epr-category-icon-active-color: var(--accent-primary, #3b82f6);
@@ -814,22 +814,48 @@ select option:active {
     --epr-category-label-text-color: var(--text-muted, #94a3b8);
     --epr-skin-tone-picker-menu-color: var(--bg-elevated);
     border: none;
-    border-radius: var(--radius-base);
+    border-radius: 0;
     font-family: var(--font-base);
-}
-
-.emoji-picker-wrap .EmojiPickerReact .epr-search-container input.epr-search {
-    border-radius: var(--radius-base);
-    font-size: 0.8125rem;
 }
 
 .emoji-picker-wrap .EmojiPickerReact .epr-category-nav {
     padding: 0.375rem 0.5rem;
 }
 
+/* Category bar with Lucide icons (categoryIcons): square buttons like the icon grid,
+   muted at rest, accent tint when active; the library's round focus ring is replaced. */
+.emoji-picker-wrap .EmojiPickerReact .epr-cat-btn.epr-cat-btn-custom-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-base);
+    color: var(--text-muted);
+    transition:
+        color 150ms,
+        background-color 150ms;
+}
+
+.emoji-picker-wrap .EmojiPickerReact .epr-cat-btn.epr-cat-btn-custom-icon:hover {
+    background-color: var(--surface-hover);
+    color: var(--text-primary);
+}
+
+.emoji-picker-wrap .EmojiPickerReact .epr-cat-btn.epr-cat-btn-custom-icon.epr-active {
+    background-color: var(--tint-accent-bg);
+    color: var(--tint-accent-text);
+}
+
+.emoji-picker-wrap .EmojiPickerReact .epr-cat-btn.epr-cat-btn-custom-icon:focus::before {
+    content: none;
+}
+
+.emoji-picker-wrap .EmojiPickerReact .epr-cat-btn.epr-cat-btn-custom-icon:focus-visible {
+    box-shadow: 0 0 0 2px var(--border-focus);
+}
+
 .emoji-picker-wrap .EmojiPickerReact .epr-emoji-category-label {
-    font-size: 0.625rem;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+    font-size: 12px;
+    font-weight: 500;
 }

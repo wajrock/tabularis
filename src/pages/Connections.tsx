@@ -82,7 +82,7 @@ import {APP_VERSION} from '@/version';
 const UNGROUPED_DROP_ID = '__ungrouped__';
 
 const NewConnectionModal = lazy(() =>
-    import('@/components/modals/NewConnectionModal').then((m) => ({
+    import('@/components/modals/NewConnectionModal/NewConnectionModal').then((m) => ({
         default: m.NewConnectionModal,
     })),
 );
@@ -1520,8 +1520,8 @@ export const Connections = () => {
                 isOpen={confirmModal !== null}
                 onClose={() => setConfirmModal(null)}
                 title={confirmModal?.title ?? ''}
-                message={confirmModal?.message ?? ''}
                 icon={confirmModal?.icon}
+                message={confirmModal?.message ?? ''}
                 confirmLabel={confirmModal?.confirmLabel}
                 variant={confirmModal?.variant}
                 onConfirm={() => {

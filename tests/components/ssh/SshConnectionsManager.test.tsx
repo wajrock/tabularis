@@ -32,7 +32,14 @@ vi.mock('lucide-react', () => ({
     AlertTriangle: () => null,
     ChevronDown: () => null,
     Search: () => null,
+    Pencil: () => null,
+    AlertCircle: () => null,
+    FolderOpen: () => null,
+    Plug: () => null,
+    KeyRound: () => null,
 }));
+
+vi.mock('@tauri-apps/plugin-dialog', () => ({open: vi.fn()}));
 
 vi.mock('@/utils/ssh', () => ({
     loadSshConnections: sshMocks.loadSshConnections,
@@ -89,55 +96,30 @@ describe('SshConnectionsManager', () => {
         expect(screen.getByText('deploy@bastion.example.com:22')).toBeInTheDocument();
     });
 
-    it('opens the editor form when Create New is clicked', async () => {
+    it('opens the editor modal when Create New is clicked', async () => {
         render(<SshConnectionsManager />);
         await screen.findByText('Prod bastion');
         fireEvent.click(screen.getByText('sshConnections.createNew'));
         expect(screen.getByPlaceholderText('sshConnections.namePlaceholder')).toBeInTheDocument();
+        expect(screen.getByText('sshConnections.newTitle')).toBeInTheDocument();
     });
 
-    it('themes create, edit, save, update, focus and checkboxes without changing delete semantics', async () => {
+    it('opens the editor modal on the connection when Edit is clicked', async () => {
         render(<SshConnectionsManager />);
         await screen.findByText('Prod bastion');
-        const create = screen.getByRole('button', {name: 'sshConnections.createNew'});
-        expect(create).toHaveClass(
-            'bg-accent-primary',
-            'hover:bg-accent-primary/90',
-            'text-inverse',
-        );
-        expect(screen.getByTitle('sshConnections.edit')).toHaveClass(
-            'text-accent',
-            'hover:bg-accent-primary/10',
-        );
-        expect(screen.getByTitle('sshConnections.delete')).toHaveClass('text-accent-error');
-        fireEvent.click(create);
-        expect(screen.getByPlaceholderText('sshConnections.namePlaceholder')).toHaveClass(
-            'focus:border-focus',
-        );
-        expect(screen.getByRole('button', {name: 'sshConnections.save'})).toHaveClass(
-            'bg-accent-primary',
-            'text-inverse',
-        );
-        for (const checkbox of screen.getAllByRole('checkbox'))
-            expect(checkbox).toHaveClass('accent-accent-primary');
-        fireEvent.click(screen.getByRole('button', {name: 'sshConnections.cancel'}));
-        fireEvent.click(screen.getByTitle('sshConnections.edit'));
-        expect(screen.getByRole('button', {name: 'sshConnections.update'})).toHaveClass(
-            'bg-accent-primary',
-            'text-inverse',
-        );
-        expect(sshMocks.saveSshConnection).not.toHaveBeenCalled();
+        fireEvent.click(screen.getByRole('button', {name: 'sshConnections.edit'}));
+        expect(screen.getByDisplayValue('Prod bastion')).toBeInTheDocument();
+        expect(screen.getByText('sshConnections.editTitle')).toBeInTheDocument();
         expect(sshMocks.updateSshConnection).not.toHaveBeenCalled();
     });
 
     it('warns about plain-text secrets when the keychain box is unticked', async () => {
         render(<SshConnectionsManager />);
-        await waitFor(() => screen.getByText('Prod bastion'));
+        await screen.findByText('Prod bastion');
         fireEvent.click(screen.getByText('sshConnections.createNew'));
 
-        const toggle = screen.getByLabelText('newConnection.saveKeychain');
+        const toggle = screen.getByRole('checkbox', {name: 'newConnection.saveKeychain'});
         expect(toggle).toBeChecked();
-        expect(toggle).not.toHaveAttribute('aria-describedby');
         expect(
             screen.queryByText('newConnection.secretsStoredInPlainText'),
         ).not.toBeInTheDocument();
@@ -145,9 +127,6 @@ describe('SshConnectionsManager', () => {
         fireEvent.click(toggle);
 
         expect(toggle).not.toBeChecked();
-        const warning = screen.getByText('newConnection.secretsStoredInPlainText');
-        expect(warning).toHaveAttribute('id', 'ssh-secrets-plaintext-warning');
-        expect(toggle).toHaveAttribute('aria-describedby', 'ssh-secrets-plaintext-warning');
         expect(toggle).toHaveAccessibleDescription('newConnection.secretsStoredInPlainText');
     });
 
@@ -155,7 +134,7 @@ describe('SshConnectionsManager', () => {
         render(<SshConnectionsManager />);
         await screen.findByText('Prod bastion');
 
-        fireEvent.click(screen.getByTitle('sshConnections.delete'));
+        fireEvent.click(screen.getByRole('button', {name: 'sshConnections.delete'}));
         expect(await screen.findByText('sshConnections.confirmDelete')).toBeInTheDocument();
         expect(sshMocks.deleteSshConnection).not.toHaveBeenCalled();
 
@@ -170,7 +149,7 @@ describe('SshConnectionsManager', () => {
         render(<SshConnectionsManager />);
         await screen.findByText('Prod bastion');
 
-        fireEvent.click(screen.getByTitle('sshConnections.delete'));
+        fireEvent.click(screen.getByRole('button', {name: 'sshConnections.delete'}));
         // The i18n test mock returns the key itself, so assert the key is present
         // in the confirmation message (the real string interpolates {{count}}).
         expect(await screen.findByText(/sshConnections\.deleteInUse/)).toBeInTheDocument();
@@ -180,7 +159,7 @@ describe('SshConnectionsManager', () => {
         render(<SshConnectionsManager />);
         await screen.findByText('Prod bastion');
 
-        fireEvent.click(screen.getByTitle('sshConnections.delete'));
+        fireEvent.click(screen.getByRole('button', {name: 'sshConnections.delete'}));
         await screen.findByText('sshConnections.confirmDelete');
         expect(screen.queryByText(/deleteInUse/)).not.toBeInTheDocument();
     });

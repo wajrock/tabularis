@@ -581,6 +581,7 @@
     "maskingPatternsDesc": "每行一个模式。列名包含任一模式时即被掩码（不区分大小写）。",
     "maskingOverrides": "按连接覆盖",
     "maskingOverridesDesc": "对某个连接强制掩码（包含）或从不掩码（排除）指定列。每行一条“表.列”；排除优先于包含和模式。",
+    "maskingDisabledNotice": "列遮蔽已在“设置 → 隐私”中关闭，因此这些列表不会生效。",
     "maskingConnection": "连接",
     "maskingConnectionDesc": "选择这些覆盖规则应用的连接。",
     "maskingInclude": "始终掩码",
@@ -1129,6 +1130,12 @@
     "configError": "请在设置中配置 AI 提供商并输入提示词。"
   },
   "newConnection": {
+    "sections": "分区",
+    "sectionGroups": {
+      "connection": "连接",
+      "network": "网络与安全",
+      "more": "更多"
+    },
     "ssmForwardHint": "解析为 {{document}}：通过托管节点转发到 {{host}}:{{port}}。在“常规”选项卡中修改目标地址；回环地址表示节点自身。",
     "ssmIamHint": "需要对目标和解析出的文档具有 ssm:StartSession 权限。",
     "ssmNotAvailable": "此驱动不支持 AWS SSM。",
@@ -1139,7 +1146,7 @@
     "ssmTargetRequired": "请填写用于连接的托管节点。",
     "testSsm": "测试 SSM",
     "testSsmHint": "打开一个真实的端口转发会话并随即关闭，不会连接数据库。",
-    "useSsm": "使用 AWS SSM 端口转发",
+    "useSsm": "启用 AWS SSM 端口转发",
     "titleNew": "新建连接",
     "titleEdit": "编辑连接",
     "subtitle": "配置数据库连接设置",
@@ -1182,7 +1189,7 @@
     "inMemoryDatabaseHint": "打开一个仅在驱动运行期间存在的临时数据库",
     "createSqliteFile": "新建",
     "browseFolder": "浏览文件夹",
-    "useSsh": "使用 SSH 隧道",
+    "useSsh": "启用 SSH 隧道",
     "sshHost": "SSH 主机",
     "sshPort": "SSH 端口",
     "sshUser": "SSH 用户",
@@ -1200,8 +1207,8 @@
     "save": "保存",
     "failSave": "保存连接失败",
     "selectSshConnection": "选择 SSH 连接",
-    "useSshConnection": "使用现有 SSH 连接",
-    "createInlineSsh": "配置内联 SSH",
+    "useSshConnection": "已保存的隧道",
+    "createInlineSsh": "自定义",
     "manageSshConnections": "管理 SSH 连接",
     "noSshConnections": "无 SSH 连接可用",
     "sslMode": "SSL 模式",
@@ -1224,7 +1231,7 @@
     "chooseK8s": "选择连接...",
     "chooseNamespace": "选择命名空间...",
     "chooseResource": "选择资源...",
-    "createInlineK8s": "内联",
+    "createInlineK8s": "自定义",
     "k8sContext": "上下文",
     "k8sNamespace": "命名空间",
     "k8sNotAvailable": "此驱动不支持 Kubernetes。",
@@ -1240,7 +1247,7 @@
     "selectContextFirst": "请先选择上下文",
     "selectK8sConnection": "选择 K8s 连接",
     "selectTypeFirst": "请先选择上下文/命名空间/类型",
-    "useK8s": "使用 Kubernetes 端口转发",
+    "useK8s": "启用 Kubernetes 端口转发",
     "useK8sConnection": "已保存的连接",
     "startupScript": "启动脚本",
     "startupScriptDescription": "每次新建到此数据源的连接时执行的 SQL。可用于会话设置，例如 SET / set_config（如绕过 RLS）。多条语句请用分号分隔。",
@@ -1252,8 +1259,6 @@
       "transaction": "PgBouncer 事务",
       "session": "PgBouncer 会话"
     },
-    "scrollTabsLeft": "向左滚动标签页",
-    "scrollTabsRight": "向右滚动标签页",
     "useIamAuth": "使用 AWS IAM 身份验证 (RDS)",
     "useIamAuthHint": "密码字段将被视为 RDS 身份验证令牌（由 `aws rds generate-db-auth-token` 生成）。需要 TLS。令牌每 15 分钟过期。",
     "useIamAuthTlsRequired": "请在上方启用 SSL 模式以使用 AWS IAM 身份验证。",
@@ -1271,6 +1276,9 @@
     "loadDatabasesHint": "点击“加载数据库”以获取可用的数据库。"
   },
   "sshConnections": {
+    "new": "新建",
+    "newTitle": "新建 SSH 连接",
+    "editTitle": "编辑 SSH 连接",
     "title": "SSH 连接",
     "createNew": "创建新的 SSH 连接",
     "noConnections": "尚未配置 SSH 连接",
@@ -2378,6 +2386,8 @@
     "dismiss": "关闭"
   },
   "k8sConnections": {
+    "newTitle": "新建 Kubernetes 连接",
+    "editTitle": "编辑 Kubernetes 连接",
     "title": "Kubernetes 连接",
     "add": "添加",
     "empty": "没有已保存的 Kubernetes 连接。点击“添加”创建一个。",

@@ -609,6 +609,7 @@
     "maskingPatternsDesc": "Un patrón por línea. Una columna se enmascara cuando su nombre contiene algún patrón (sin distinción de mayúsculas).",
     "maskingOverrides": "Excepciones por conexión",
     "maskingOverridesDesc": "Obliga a enmascarar (incluir) o a no enmascarar (excluir) columnas concretas de una conexión. Una entrada tabla.columna por línea; las exclusiones prevalecen sobre inclusiones y patrones.",
+    "maskingDisabledNotice": "El enmascaramiento de columnas está desactivado en Ajustes → Privacidad, así que estas listas no se aplican.",
     "maskingConnection": "Conexión",
     "maskingConnectionDesc": "Elige a qué conexión se aplican estas excepciones.",
     "maskingInclude": "Enmascarar siempre",
@@ -1184,6 +1185,12 @@
     "configError": "Configura el proveedor de IA en Configuración e ingresa un prompt."
   },
   "newConnection": {
+    "sections": "Secciones",
+    "sectionGroups": {
+      "connection": "Conexión",
+      "network": "Red y seguridad",
+      "more": "Más"
+    },
     "ssmForwardHint": "Se resuelve a {{document}}: reenvía a {{host}}:{{port}} a través del nodo administrado. Cambia la dirección de destino en la pestaña General; un host de bucle invertido significa el propio nodo.",
     "ssmIamHint": "Requiere ssm:StartSession sobre el destino y sobre el documento resuelto.",
     "ssmNotAvailable": "AWS SSM no está disponible para este controlador.",
@@ -1194,7 +1201,7 @@
     "ssmTargetRequired": "Indica el nodo administrado a través del cual conectar.",
     "testSsm": "Probar SSM",
     "testSsmHint": "Abre una sesión real de reenvío de puertos y la cierra de nuevo, sin conectarse a la base de datos.",
-    "useSsm": "Usar reenvío de puertos de AWS SSM",
+    "useSsm": "Activar el reenvío de puertos de AWS SSM",
     "titleNew": "Nueva Conexión",
     "titleEdit": "Editar Conexión",
     "subtitle": "Configurar los ajustes de conexión a la base de datos",
@@ -1237,7 +1244,7 @@
     "inMemoryDatabaseHint": "Abre una base de datos temporal que solo existe mientras el controlador está en ejecución",
     "createSqliteFile": "Nuevo",
     "browseFolder": "Explorar carpeta",
-    "useSsh": "Usar Túnel SSH",
+    "useSsh": "Activar túnel SSH",
     "sshHost": "Host SSH",
     "sshPort": "Puerto SSH",
     "sshUser": "Usuario SSH",
@@ -1255,8 +1262,8 @@
     "save": "Guardar",
     "failSave": "Error al guardar la conexión",
     "selectSshConnection": "Seleccionar Conexión SSH",
-    "useSshConnection": "Usar Conexión SSH Existente",
-    "createInlineSsh": "Configurar SSH en Línea",
+    "useSshConnection": "Túnel guardado",
+    "createInlineSsh": "Personalizado",
     "manageSshConnections": "Gestionar Conexiones SSH",
     "noSshConnections": "No hay conexiones SSH disponibles",
     "sslMode": "Modo SSL",
@@ -1279,7 +1286,7 @@
     "chooseK8s": "Elige una conexión...",
     "chooseNamespace": "Elige un namespace...",
     "chooseResource": "Elige un recurso...",
-    "createInlineK8s": "En línea",
+    "createInlineK8s": "Personalizado",
     "k8sContext": "Contexto",
     "k8sNamespace": "Namespace",
     "k8sNotAvailable": "Kubernetes no está disponible para este controlador.",
@@ -1295,7 +1302,7 @@
     "selectContextFirst": "Selecciona primero un contexto",
     "selectK8sConnection": "Selecciona conexión de K8s",
     "selectTypeFirst": "Selecciona primero contexto/namespace/tipo",
-    "useK8s": "Usar Port-Forward de Kubernetes",
+    "useK8s": "Activar port-forward de Kubernetes",
     "useK8sConnection": "Conexión guardada",
     "startupScript": "Script de inicio",
     "startupScriptDescription": "SQL que se ejecuta en cada nueva conexión a esta fuente de datos. Úsalo para ajustes de sesión como SET / set_config (p. ej., para omitir RLS). Separa las sentencias con punto y coma.",
@@ -1307,8 +1314,6 @@
       "transaction": "PgBouncer transacción",
       "session": "PgBouncer sesión"
     },
-    "scrollTabsLeft": "Desplazar pestañas a la izquierda",
-    "scrollTabsRight": "Desplazar pestañas a la derecha",
     "useIamAuth": "Usar autenticación AWS IAM (RDS)",
     "useIamAuthHint": "El campo de contraseña se interpreta como un token de autenticación de RDS (obtenido con `aws rds generate-db-auth-token`). Requiere TLS. Los tokens caducan cada 15 minutos.",
     "useIamAuthTlsRequired": "Activa un modo SSL arriba para usar la autenticación AWS IAM.",
@@ -1326,6 +1331,9 @@
     "loadDatabasesHint": "Pulsa Cargar bases de datos para obtener las disponibles."
   },
   "sshConnections": {
+    "new": "Nuevo",
+    "newTitle": "Nueva conexión SSH",
+    "editTitle": "Editar conexión SSH",
     "title": "Conexiones SSH",
     "createNew": "Crear Nueva Conexión SSH",
     "noConnections": "No hay conexiones SSH configuradas",
@@ -2371,6 +2379,8 @@
     "dismiss": "Cerrar"
   },
   "k8sConnections": {
+    "newTitle": "Nueva conexión de Kubernetes",
+    "editTitle": "Editar conexión de Kubernetes",
     "title": "Conexiones de Kubernetes",
     "add": "Añadir",
     "empty": "No hay conexiones de Kubernetes guardadas. Haz clic en \"Añadir\" para crear una.",

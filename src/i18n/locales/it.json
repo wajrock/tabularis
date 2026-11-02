@@ -616,6 +616,7 @@
     "maskingPatternsDesc": "Un pattern per riga. Una colonna viene mascherata quando il suo nome contiene un pattern (senza distinzione tra maiuscole e minuscole).",
     "maskingOverrides": "Eccezioni per connessione",
     "maskingOverridesDesc": "Forza il mascheramento (includi) o escludi colonne specifiche per una connessione. Una voce tabella.colonna per riga; le esclusioni hanno la precedenza su inclusioni e pattern.",
+    "maskingDisabledNotice": "Il mascheramento delle colonne è disattivato in Impostazioni → Privacy, quindi questi elenchi non vengono applicati.",
     "maskingConnection": "Connessione",
     "maskingConnectionDesc": "Scegli a quale connessione si applicano queste eccezioni.",
     "maskingInclude": "Maschera sempre",
@@ -1219,6 +1220,12 @@
     "configError": "Configura il provider AI nelle Impostazioni e inserisci un prompt."
   },
   "newConnection": {
+    "sections": "Sezioni",
+    "sectionGroups": {
+      "connection": "Connessione",
+      "network": "Rete e sicurezza",
+      "more": "Altro"
+    },
     "ssmForwardHint": "Si risolve in {{document}}: inoltra a {{host}}:{{port}} attraverso il nodo gestito. Modifica l'indirizzo di destinazione nella scheda Generale; un host di loopback indica il nodo stesso.",
     "ssmIamHint": "Richiede ssm:StartSession sul target e sul documento risolto.",
     "ssmNotAvailable": "AWS SSM non è disponibile per questo driver.",
@@ -1229,7 +1236,7 @@
     "ssmTargetRequired": "Indica il nodo gestito attraverso cui connettersi.",
     "testSsm": "Testa SSM",
     "testSsmHint": "Apre una vera sessione di port forwarding e la richiude, senza connettersi al database.",
-    "useSsm": "Usa il port forwarding AWS SSM",
+    "useSsm": "Abilita il port forwarding AWS SSM",
     "titleNew": "Nuova Connessione",
     "titleEdit": "Modifica Connessione",
     "subtitle": "Configura le impostazioni di connessione al database",
@@ -1272,7 +1279,7 @@
     "inMemoryDatabaseHint": "Apri un database temporaneo che esiste solo finché il driver è in esecuzione",
     "createSqliteFile": "Nuovo",
     "browseFolder": "Sfoglia cartella",
-    "useSsh": "Usa Tunnel SSH",
+    "useSsh": "Abilita tunnel SSH",
     "sshHost": "Host SSH",
     "sshPort": "Porta SSH",
     "sshUser": "Utente SSH",
@@ -1290,8 +1297,8 @@
     "save": "Salva",
     "failSave": "Salvataggio connessione fallito",
     "selectSshConnection": "Seleziona Connessione SSH",
-    "useSshConnection": "Usa Connessione SSH Esistente",
-    "createInlineSsh": "Configura SSH Inline",
+    "useSshConnection": "Tunnel salvato",
+    "createInlineSsh": "Personalizzato",
     "manageSshConnections": "Gestisci Connessioni SSH",
     "noSshConnections": "Nessuna connessione SSH disponibile",
     "sslMode": "Modalità SSL",
@@ -1314,7 +1321,7 @@
     "chooseK8s": "Scegli una connessione...",
     "chooseNamespace": "Scegli un namespace...",
     "chooseResource": "Scegli una risorsa...",
-    "createInlineK8s": "Inline",
+    "createInlineK8s": "Personalizzato",
     "k8sContext": "Contesto",
     "k8sNamespace": "Namespace",
     "k8sNotAvailable": "Kubernetes non è disponibile per questo driver.",
@@ -1330,7 +1337,7 @@
     "selectContextFirst": "Seleziona prima un contesto",
     "selectK8sConnection": "Seleziona connessione K8s",
     "selectTypeFirst": "Seleziona prima contesto/namespace/tipo",
-    "useK8s": "Usa Port-Forward Kubernetes",
+    "useK8s": "Abilita port-forward Kubernetes",
     "useK8sConnection": "Connessione salvata",
     "startupScript": "Script di avvio",
     "startupScriptDescription": "SQL eseguito a ogni nuova connessione a questa origine dati. Usalo per le impostazioni di sessione come SET / set_config (ad es. per bypassare la RLS). Separa le istruzioni con punto e virgola.",
@@ -1342,8 +1349,6 @@
       "transaction": "PgBouncer transazione",
       "session": "PgBouncer sessione"
     },
-    "scrollTabsLeft": "Scorri schede a sinistra",
-    "scrollTabsRight": "Scorri schede a destra",
     "useIamAuth": "Usa autenticazione AWS IAM (RDS)",
     "useIamAuthHint": "Il campo password è trattato come un token di autenticazione RDS (da `aws rds generate-db-auth-token`). Richiede TLS. I token scadono ogni 15 minuti.",
     "useIamAuthTlsRequired": "Attiva una modalità SSL qui sopra per usare l'autenticazione AWS IAM.",
@@ -1361,6 +1366,9 @@
     "loadDatabasesHint": "Premi Carica database per recuperare i database disponibili."
   },
   "sshConnections": {
+    "new": "Nuovo",
+    "newTitle": "Nuova connessione SSH",
+    "editTitle": "Modifica connessione SSH",
     "title": "Connessioni SSH",
     "createNew": "Crea Nuova Connessione SSH",
     "noConnections": "Nessuna connessione SSH configurata",
@@ -2470,6 +2478,8 @@
     "dismiss": "Chiudi"
   },
   "k8sConnections": {
+    "newTitle": "Nuova connessione Kubernetes",
+    "editTitle": "Modifica connessione Kubernetes",
     "title": "Connessioni Kubernetes",
     "add": "Aggiungi",
     "empty": "Nessuna connessione Kubernetes salvata. Clicca \"Aggiungi\" per crearne una.",

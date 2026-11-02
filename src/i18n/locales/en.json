@@ -600,6 +600,7 @@
     "maskingPatternsDesc": "One pattern per line. A column is masked when its name contains any pattern (case-insensitive).",
     "maskingOverrides": "Per-connection overrides",
     "maskingOverridesDesc": "Force specific columns to be masked (include) or never masked (exclude) for a connection. One table.column entry per line; exclude wins over include and patterns.",
+    "maskingDisabledNotice": "Column masking is turned off in Settings → Privacy, so these lists are not applied.",
     "maskingConnection": "Connection",
     "maskingConnectionDesc": "Choose which connection these overrides apply to.",
     "maskingInclude": "Always mask",
@@ -1221,6 +1222,12 @@
     "configError": "Please configure AI provider in Settings and enter a prompt."
   },
   "newConnection": {
+    "sections": "Sections",
+    "sectionGroups": {
+      "connection": "Connection",
+      "network": "Network & security",
+      "more": "More"
+    },
     "ssmForwardHint": "Resolves to {{document}} - forwards to {{host}}:{{port}} through the managed node. Change the target address on the General tab; a loopback host means the node itself.",
     "ssmIamHint": "Requires ssm:StartSession on the target and on the resolved document.",
     "ssmNotAvailable": "AWS SSM is not available for this driver.",
@@ -1231,7 +1238,7 @@
     "ssmTargetRequired": "Enter the managed node to connect through.",
     "testSsm": "Test SSM",
     "testSsmHint": "Opens a real port-forwarding session and closes it again, without connecting to the database.",
-    "useSsm": "Use AWS SSM Port Forwarding",
+    "useSsm": "Enable AWS SSM port forwarding",
     "titleNew": "New Connection",
     "titleEdit": "Edit Connection",
     "subtitle": "Configure database connection settings",
@@ -1274,7 +1281,7 @@
     "inMemoryDatabaseHint": "Open a temporary database that lives only while the driver is running",
     "createSqliteFile": "New",
     "browseFolder": "Browse folder",
-    "useSsh": "Use SSH Tunnel",
+    "useSsh": "Enable SSH tunnel",
     "sshHost": "SSH Host",
     "sshPort": "SSH Port",
     "sshUser": "SSH User",
@@ -1292,8 +1299,8 @@
     "save": "Save",
     "failSave": "Failed to save connection",
     "selectSshConnection": "Select SSH Connection",
-    "useSshConnection": "Use Existing SSH Connection",
-    "createInlineSsh": "Configure SSH Inline",
+    "useSshConnection": "Saved tunnel",
+    "createInlineSsh": "Custom",
     "manageSshConnections": "Manage SSH Connections",
     "noSshConnections": "No SSH connections available",
     "sslMode": "SSL Mode",
@@ -1316,7 +1323,7 @@
     "chooseK8s": "Choose a connection...",
     "chooseNamespace": "Choose a namespace...",
     "chooseResource": "Choose a resource...",
-    "createInlineK8s": "Inline",
+    "createInlineK8s": "Custom",
     "k8sContext": "Context",
     "k8sNamespace": "Namespace",
     "k8sNotAvailable": "Kubernetes is not available for this driver.",
@@ -1332,8 +1339,8 @@
     "selectContextFirst": "Select a context first",
     "selectK8sConnection": "Select K8s Connection",
     "selectTypeFirst": "Select context/namespace/type first",
-    "useK8s": "Use Kubernetes Port-Forward",
-    "useK8sConnection": "Saved Connection",
+    "useK8s": "Enable Kubernetes port-forward",
+    "useK8sConnection": "Saved connection",
     "startupScript": "Startup Script",
     "startupScriptDescription": "SQL run on every new connection to this data source. Use it for session settings such as SET / set_config (e.g. bypassing RLS). Separate statements with semicolons.",
     "startupScriptPlaceholder": "SELECT set_config('app.bypass_rls', 'on', false);",
@@ -1344,8 +1351,6 @@
       "transaction": "PgBouncer transaction",
       "session": "PgBouncer session"
     },
-    "scrollTabsLeft": "Scroll tabs left",
-    "scrollTabsRight": "Scroll tabs right",
     "useIamAuth": "Use AWS IAM Authentication (RDS)",
     "useIamAuthHint": "The password field is treated as an RDS auth token (from `aws rds generate-db-auth-token`). Requires TLS. Tokens expire every 15 minutes.",
     "useIamAuthTlsRequired": "Enable an SSL mode above to use AWS IAM authentication.",
@@ -1363,6 +1368,9 @@
     "loadDatabasesHint": "Click Load Databases to fetch available databases."
   },
   "sshConnections": {
+    "new": "New",
+    "newTitle": "New SSH connection",
+    "editTitle": "Edit SSH connection",
     "title": "SSH Connections",
     "createNew": "Create New SSH Connection",
     "noConnections": "No SSH connections configured yet",
@@ -2547,6 +2555,8 @@
     "dismiss": "Dismiss"
   },
   "k8sConnections": {
+    "newTitle": "New Kubernetes connection",
+    "editTitle": "Edit Kubernetes connection",
     "title": "Kubernetes Connections",
     "add": "Add",
     "empty": "No Kubernetes connections saved. Click \"Add\" to create one.",
