@@ -490,7 +490,7 @@
       "unlock": "Importar"
     },
     "importFromApp": {
-      "title": "Import from App",
+      "title": "Importar conexiones",
       "subtitle": "Import connections from another installed SQL client",
       "previewSubtitle": "Review connections from {{source}}",
       "notInstalled": "Not installed",

@@ -1,7 +1,6 @@
 import {useState, useEffect, useCallback} from 'react';
 import {useTranslation} from 'react-i18next';
 import {
-    X,
     Loader2,
     Database,
     ArrowLeft,
@@ -25,7 +24,11 @@ import type {ConnectionGroup} from '@/contexts/DatabaseContext';
 import {flattenGroupTree} from '@/utils/groupTree';
 import {Select} from '@/components/ui/Select';
 import {PasswordInput} from '@/components/ui/PasswordInput';
-import {BetaBadge} from '@/components/ui/BetaBadge';
+import {ImportSourceLogo} from '@/components/icons/ImportSourceLogos';
+import {Button} from '@/components/ui/Button';
+import {Field} from '@/components/ui/Field';
+import {InlineBanner} from '@/components/ui/InlineBanner';
+import {Modal} from '@/components/ui/Modal';
 import {GITHUB_ISSUES_URL} from '@/config/links';
 import type {
     ImportSourceInfo,
@@ -372,202 +375,182 @@ export const ImportFromAppModal = ({isOpen, onClose, onImported}: ImportFromAppM
         setNewGroupParent(next);
     };
 
-    if (!isOpen) return null;
-
     const importCount = preview
         ? preview.items.filter((i) => (resolutions[i.index] ?? 'skip') !== 'skip').length
         : 0;
 
+    const subtitle =
+        step === 'picker'
+            ? t('connections.importFromApp.subtitle')
+            : step === 'password'
+              ? t('connections.importPasswordModal.subtitle')
+              : t('connections.importFromApp.previewSubtitle', {source: preview?.sourceName ?? ''});
+
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] backdrop-blur-sm">
-            <div className="bg-elevated border border-strong rounded-xl shadow-2xl w-[640px] max-h-[90vh] overflow-hidden flex flex-col">
-                {/* Header */}
-                <div className="flex items-center justify-between p-4 border-b border-default bg-base">
-                    <div className="flex items-center gap-3">
-                        {(step === 'preview' || step === 'password') && (
-                            <button
-                                onClick={() => setStep('picker')}
-                                className="text-secondary hover:text-primary transition-colors"
-                                title={t('common.back', {defaultValue: 'Back'})}
-                            >
-                                <ArrowLeft size={18} />
-                            </button>
+        <Modal
+            isOpen={isOpen}
+            onClose={onClose}
+            title={t('connections.importFromApp.title')}
+            bodyClassName="flex flex-col gap-4"
+            footerStart={
+                (step === 'preview' || step === 'password') && (
+                    <>
+                        <Button
+                            variant="ghost"
+                            className="-ml-3.5"
+                            icon={<ArrowLeft size={16} />}
+                            onClick={() => setStep('picker')}
+                        >
+                            {t('common.back', {defaultValue: 'Back'})}
+                        </Button>
+                        {step === 'preview' && preview?.credentialsAborted && (
+                            <span className="flex items-center gap-1.5 text-xs text-tint-warning-fg">
+                                <AlertTriangle size={14} />
+                                {t('connections.importFromApp.credentialsAborted')}
+                            </span>
                         )}
-                        <div className="p-2 bg-accent-primary/15 rounded-lg">
-                            <Database size={20} className="text-accent" />
-                        </div>
-                        <div>
-                            <h2 className="flex items-center gap-2 text-lg font-semibold text-primary">
-                                {t('connections.importFromApp.title')}
-                                <BetaBadge />
-                            </h2>
-                            <p className="text-xs text-secondary">
-                                {step === 'picker'
-                                    ? t('connections.importFromApp.subtitle')
-                                    : step === 'password'
-                                      ? t('connections.importPasswordModal.subtitle')
-                                      : t('connections.importFromApp.previewSubtitle', {
-                                            source: preview?.sourceName ?? '',
-                                        })}
-                            </p>
-                        </div>
-                    </div>
-                    <button
-                        onClick={onClose}
-                        className="text-secondary hover:text-primary transition-colors"
-                    >
-                        <X size={20} />
-                    </button>
+                    </>
+                )
+            }
+            footer={
+                <>
+                    <Button variant="outline" onClick={onClose}>
+                        {t('common.cancel')}
+                    </Button>
+                    {step === 'picker' ? (
+                        <Button
+                            onClick={handleContinue}
+                            disabled={!canContinueFromPicker || loading}
+                        >
+                            {t('common.continue', {defaultValue: 'Continue'})}
+                        </Button>
+                    ) : step === 'password' ? (
+                        <Button
+                            onClick={() => void handleDecryptImport()}
+                            disabled={loading || !password}
+                        >
+                            {t('connections.importPasswordModal.unlock')}
+                        </Button>
+                    ) : (
+                        <Button
+                            onClick={() => void handleApply()}
+                            disabled={loading || importCount === 0}
+                        >
+                            {t('connections.importFromApp.importCount', {count: importCount})}
+                        </Button>
+                    )}
+                </>
+            }
+        >
+            <p className="text-sm text-secondary">{subtitle}</p>
+
+            <InlineBanner tone="amber" icon={<FlaskConical size={14} />}>
+                {t('connections.importFromApp.betaNotice')}{' '}
+                <button
+                    type="button"
+                    onClick={() => openUrl(GITHUB_ISSUES_URL)}
+                    className="font-medium underline underline-offset-2"
+                >
+                    {t('connections.importFromApp.reportIssue')}
+                </button>
+            </InlineBanner>
+
+            {error && (
+                <InlineBanner tone="red" role="alert" icon={<AlertTriangle size={14} />}>
+                    {error}
+                </InlineBanner>
+            )}
+
+            {loading && (
+                <div className="flex items-center justify-center py-10 text-muted">
+                    <Loader2 size={22} className="animate-spin" />
                 </div>
+            )}
 
-                {/* Content */}
-                <div className="p-6 overflow-y-auto flex-1">
-                    {/* Beta notice with a link to report problems. */}
-                    <div className="mb-4 flex items-start gap-2 rounded-lg border border-accent-warning/30 bg-accent-warning/5 p-3 text-xs text-accent-warning/90">
-                        <FlaskConical size={14} className="mt-0.5 shrink-0" />
-                        <span>
-                            {t('connections.importFromApp.betaNotice')}{' '}
-                            <button
-                                onClick={() => openUrl(GITHUB_ISSUES_URL)}
-                                className="font-medium underline underline-offset-2 hover:text-accent-warning"
-                            >
-                                {t('connections.importFromApp.reportIssue')}
-                            </button>
-                        </span>
-                    </div>
+            {!loading && step === 'picker' && (
+                <SourcePicker
+                    sources={sources}
+                    selectedId={selectedId}
+                    onSelect={setSelectedId}
+                    includePasswords={includePasswords}
+                    onTogglePasswords={setIncludePasswords}
+                />
+            )}
 
-                    {error && (
-                        <div className="mb-4 flex items-start gap-2 rounded-lg border border-accent-error/40 bg-accent-error/10 p-3 text-sm text-accent-error">
-                            <AlertTriangle size={16} className="mt-0.5 shrink-0" />
-                            <span>{error}</span>
-                        </div>
-                    )}
-
-                    {loading && (
-                        <div className="flex items-center justify-center py-10 text-muted">
-                            <Loader2 size={22} className="animate-spin" />
-                        </div>
-                    )}
-
-                    {!loading && step === 'picker' && (
-                        <SourcePicker
-                            sources={sources}
-                            selectedId={selectedId}
-                            onSelect={setSelectedId}
-                            includePasswords={includePasswords}
-                            onTogglePasswords={setIncludePasswords}
+            {!loading && step === 'preview' && preview && (
+                <div className="space-y-3">
+                    {preview.items.length > 0 && (
+                        <BulkGroupSelector
+                            groups={connectionGroups}
+                            action={bulkAction}
+                            onActionChange={applyBulkAction}
+                            showGroup={importCount > 0}
+                            value={bulkGroup}
+                            newGroupName={bulkNewName}
+                            newGroupParent={bulkNewParent}
+                            onChange={applyBulkGroup}
+                            onNewGroupNameChange={applyBulkNewName}
+                            onNewGroupParentChange={applyBulkNewParent}
                         />
                     )}
-
-                    {!loading && step === 'preview' && preview && (
-                        <div className="space-y-3">
-                            {preview.items.length > 0 && (
-                                <BulkGroupSelector
-                                    groups={connectionGroups}
-                                    action={bulkAction}
-                                    onActionChange={applyBulkAction}
-                                    showGroup={importCount > 0}
-                                    value={bulkGroup}
-                                    newGroupName={bulkNewName}
-                                    newGroupParent={bulkNewParent}
-                                    onChange={applyBulkGroup}
-                                    onNewGroupNameChange={applyBulkNewName}
-                                    onNewGroupParentChange={applyBulkNewParent}
-                                />
-                            )}
-                            <PreviewList
-                                preview={preview}
-                                resolutions={resolutions}
-                                onChange={(index, action) =>
-                                    setResolutions((prev) => ({...prev, [index]: action}))
-                                }
-                                groups={connectionGroups}
-                                groupChoice={groupChoice}
-                                newGroupName={newGroupName}
-                                newGroupParent={newGroupParent}
-                                onGroupChoiceChange={(index, value) =>
-                                    setGroupChoice((prev) => ({...prev, [index]: value}))
-                                }
-                                onNewGroupNameChange={(index, value) =>
-                                    setNewGroupName((prev) => ({...prev, [index]: value}))
-                                }
-                                onNewGroupParentChange={(index, value) =>
-                                    setNewGroupParent((prev) => ({...prev, [index]: value}))
-                                }
-                            />
-                        </div>
-                    )}
-
-                    {!loading && step === 'password' && (
-                        <div className="space-y-3">
-                            <div className="flex items-center gap-2 text-sm text-secondary">
-                                <Lock size={15} className="text-accent shrink-0" />
-                                <span>{t('connections.importPasswordModal.title')}</span>
-                            </div>
-                            <label className="block text-xs font-medium text-secondary">
-                                {t('connections.importPasswordModal.password')}
-                            </label>
-                            <PasswordInput
-                                value={password}
-                                onChange={setPassword}
-                                autoFocus
-                                aria-label={t('connections.importPasswordModal.password')}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter' && password) void handleDecryptImport();
-                                }}
-                            />
-                        </div>
-                    )}
+                    <PreviewList
+                        preview={preview}
+                        resolutions={resolutions}
+                        onChange={(index, action) =>
+                            setResolutions((prev) => ({...prev, [index]: action}))
+                        }
+                        groups={connectionGroups}
+                        groupChoice={groupChoice}
+                        newGroupName={newGroupName}
+                        newGroupParent={newGroupParent}
+                        onGroupChoiceChange={(index, value) =>
+                            setGroupChoice((prev) => ({...prev, [index]: value}))
+                        }
+                        onNewGroupNameChange={(index, value) =>
+                            setNewGroupName((prev) => ({...prev, [index]: value}))
+                        }
+                        onNewGroupParentChange={(index, value) =>
+                            setNewGroupParent((prev) => ({...prev, [index]: value}))
+                        }
+                    />
                 </div>
+            )}
 
-                {/* Footer */}
-                <div className="p-4 border-t border-default bg-base/50 flex justify-between gap-3">
-                    {step === 'preview' && preview?.credentialsAborted ? (
-                        <span className="flex items-center gap-1.5 text-xs text-accent-warning">
-                            <AlertTriangle size={13} />
-                            {t('connections.importFromApp.credentialsAborted')}
-                        </span>
-                    ) : (
-                        <span />
-                    )}
-                    <div className="flex gap-3">
-                        <button
-                            onClick={onClose}
-                            className="px-4 py-2 text-secondary hover:text-primary transition-colors text-sm"
-                        >
-                            {t('common.cancel')}
-                        </button>
-                        {step === 'picker' ? (
-                            <button
-                                onClick={handleContinue}
-                                disabled={!canContinueFromPicker || loading}
-                                className="px-4 py-2 bg-accent-primary hover:bg-accent-primary/90 text-inverse rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                            >
-                                {t('common.continue', {defaultValue: 'Continue'})}
-                            </button>
-                        ) : step === 'password' ? (
-                            <button
-                                onClick={handleDecryptImport}
-                                disabled={loading || !password}
-                                className="px-4 py-2 bg-accent-primary hover:bg-accent-primary/90 text-inverse rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                            >
-                                {t('connections.importPasswordModal.unlock')}
-                            </button>
-                        ) : (
-                            <button
-                                onClick={handleApply}
-                                disabled={loading || importCount === 0}
-                                className="px-4 py-2 bg-accent-primary hover:bg-accent-primary/90 text-inverse rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                            >
-                                {t('connections.importFromApp.importCount', {count: importCount})}
-                            </button>
-                        )}
-                    </div>
-                </div>
-            </div>
-        </div>
+            {!loading && step === 'password' && (
+                <Field label={t('connections.importPasswordModal.password')}>
+                    <PasswordInput
+                        value={password}
+                        onChange={setPassword}
+                        autoFocus
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' && password) void handleDecryptImport();
+                        }}
+                    />
+                </Field>
+            )}
+        </Modal>
     );
 };
+
+// ── Source icon ────────────────────────────────────────────────────────────
+
+/** Tile of an import source: the app's logo, the Tabularis mark for our own export file, or a database glyph. */
+const ImportSourceIcon = ({id}: {id: string}) =>
+    id === TABULARIS_SOURCE_ID ? (
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary">
+            <img src="/logo.svg" alt="" className="h-6 w-6" />
+        </span>
+    ) : (
+        <ImportSourceLogo
+            id={id}
+            size={32}
+            fallback={
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-surface-primary text-secondary">
+                    <Database size={16} />
+                </span>
+            }
+        />
+    );
 
 // ── Source picker step ─────────────────────────────────────────────────────
 
@@ -604,34 +587,33 @@ const SourcePicker = ({
 
     return (
         <div className="space-y-4">
-            <div className="space-y-1.5">
+            <div role="radiogroup" className="grid grid-cols-2 gap-2">
                 {sources.map((s) => {
                     const selected = s.id === selectedId;
+                    const unavailable = !s.available && !s.needsFile && !s.manualPathSupported;
                     return (
                         <button
                             key={s.id}
-                            disabled={!s.available && !s.needsFile && !s.manualPathSupported}
+                            type="button"
+                            role="radio"
+                            aria-checked={selected}
+                            disabled={unavailable}
                             onClick={() => onSelect(s.id)}
                             className={clsx(
-                                'w-full flex items-center gap-3 rounded-xl border px-3.5 py-3 text-left transition-all',
+                                'flex items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors',
                                 selected
-                                    ? 'border-accent-primary/60 bg-accent-primary/10'
-                                    : 'border-strong bg-base hover:border-accent-primary/40',
-                                !s.available &&
-                                    !s.needsFile &&
-                                    !s.manualPathSupported &&
-                                    'opacity-50 cursor-not-allowed hover:border-strong',
+                                    ? 'border-transparent bg-accent-primary/5 outline outline-[1.5px] -outline-offset-1 outline-accent-primary'
+                                    : 'border-default hover:bg-surface-hover',
+                                unavailable && 'opacity-50 hover:bg-transparent',
                             )}
                         >
-                            <div className="p-2 rounded-lg bg-surface-secondary">
-                                <Database size={18} className="text-secondary" />
-                            </div>
-                            <div className="min-w-0">
-                                <p className="text-sm font-semibold text-primary">
+                            <ImportSourceIcon id={s.id} />
+                            <span className="flex min-w-0 flex-col">
+                                <span className="truncate text-sm font-medium text-primary">
                                     {s.displayName}
-                                </p>
-                                <p className="text-xs text-muted">{subtitle(s)}</p>
-                            </div>
+                                </span>
+                                <span className="truncate text-xs text-muted">{subtitle(s)}</span>
+                            </span>
                         </button>
                     );
                 })}
@@ -639,7 +621,7 @@ const SourcePicker = ({
 
             {/* Include passwords toggle */}
             {showPasswordToggle && (
-                <label className="grid grid-cols-[auto_1fr] items-start gap-x-3 rounded-xl border border-strong bg-base p-3.5 cursor-pointer">
+                <label className="grid cursor-pointer grid-cols-[auto_1fr] items-start gap-x-3 rounded-lg border border-default p-3.5">
                     <input
                         type="checkbox"
                         checked={includePasswords}

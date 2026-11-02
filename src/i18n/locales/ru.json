@@ -488,7 +488,7 @@
       "unlock": "Импортировать"
     },
     "importFromApp": {
-      "title": "Import from App",
+      "title": "Импортировать подключения",
       "subtitle": "Import connections from another installed SQL client",
       "previewSubtitle": "Review connections from {{source}}",
       "notInstalled": "Not installed",

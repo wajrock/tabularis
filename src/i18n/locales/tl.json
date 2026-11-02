@@ -481,7 +481,7 @@
       "unlock": "I-import"
     },
     "importFromApp": {
-      "title": "Mag-import mula sa App",
+      "title": "Mag-import ng mga koneksyon",
       "subtitle": "Mag-import ng mga koneksyon mula sa ibang naka-install na SQL client",
       "previewSubtitle": "Suriin ang mga koneksyon mula sa {{source}}",
       "notInstalled": "Hindi naka-install",

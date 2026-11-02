@@ -61,6 +61,10 @@ const ALLOWLIST = {
         rules: ['hex', 'palette'],
         reason: 'third-party brand marks',
     },
+    'src/components/icons/ImportSourceLogos.tsx': {
+        rules: ['hex'],
+        reason: 'brand colors of the apps connections are imported from',
+    },
     'src/components/icons/DiscordIcon.tsx': {
         rules: ['hex', 'palette'],
         reason: 'Discord brand mark',

@@ -480,7 +480,7 @@
       "unlock": "インポート"
     },
     "importFromApp": {
-      "title": "Import from App",
+      "title": "接続をインポート",
       "subtitle": "Import connections from another installed SQL client",
       "previewSubtitle": "Review connections from {{source}}",
       "notInstalled": "Not installed",

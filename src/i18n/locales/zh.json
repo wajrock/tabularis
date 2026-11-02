@@ -466,7 +466,7 @@
       "unlock": "导入"
     },
     "importFromApp": {
-      "title": "Import from App",
+      "title": "导入连接",
       "subtitle": "Import connections from another installed SQL client",
       "previewSubtitle": "Review connections from {{source}}",
       "notInstalled": "Not installed",
