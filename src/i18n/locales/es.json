@@ -109,7 +109,6 @@
     "collapse": "Contraer barra lateral",
     "expand": "Expandir barra lateral",
     "navigation": "Navegación principal",
-    "sections": { "databases": "Bases de datos", "ai": "IA" },
     "plugins": "Plugins",
     "aiActivity": "Actividad de IA",
     "pendingApprovals_one": "{{count}} solicitud pendiente de aprobación",

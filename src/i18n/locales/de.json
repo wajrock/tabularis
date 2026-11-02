@@ -109,7 +109,6 @@
     "collapse": "Seitenleiste einklappen",
     "expand": "Seitenleiste ausklappen",
     "navigation": "Hauptnavigation",
-    "sections": { "databases": "Datenbanken", "ai": "KI" },
     "plugins": "Plugins",
     "aiActivity": "KI-Aktivität",
     "pendingApprovals_one": "{{count}} Anfrage wartet auf Freigabe",

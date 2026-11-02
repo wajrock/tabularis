@@ -1,7 +1,7 @@
 import {useNavigate} from 'react-router-dom';
 import {useTranslation} from 'react-i18next';
 import clsx from 'clsx';
-import {Github, Settings} from 'lucide-react';
+import {Github} from 'lucide-react';
 import {openUrl} from '@tauri-apps/plugin-opener';
 import {DiscordIcon} from '@/components/icons/DiscordIcon';
 import {IconButton} from '@/components/ui/IconButton';
@@ -11,7 +11,6 @@ import {useDatabase} from '@/hooks/useDatabase';
 import {useUpdate} from '@/hooks/useUpdate';
 import {APP_VERSION} from '@/version';
 import {DiscordCommunityCallout} from './DiscordCommunityCallout';
-import {NavItem} from './NavItem';
 import {FOCUS_RING} from '@/components/ui/focusRing';
 
 interface NavFooterProps {
@@ -49,12 +48,6 @@ export function NavFooter({variant, onOpenWhatsNew}: NavFooterProps) {
     if (variant === 'rail') {
         return (
             <div className="flex flex-col items-center gap-1 border-t border-default pt-2">
-                <NavItem
-                    to="/settings"
-                    icon={Settings}
-                    label={t('sidebar.settings')}
-                    variant="rail"
-                />
                 {discord}
                 {pluginActions}
             </div>
@@ -63,12 +56,6 @@ export function NavFooter({variant, onOpenWhatsNew}: NavFooterProps) {
 
     return (
         <div className="flex flex-col gap-4 border-t border-default pt-3">
-            <NavItem
-                to="/settings"
-                icon={Settings}
-                label={t('sidebar.settings')}
-                variant="expanded"
-            />
             {pluginActions}
             <div className="flex h-4 items-center gap-1 px-3">
                 {latestVersion ? (

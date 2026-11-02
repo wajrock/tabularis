@@ -109,7 +109,6 @@
     "collapse": "Collapse sidebar",
     "expand": "Expand sidebar",
     "navigation": "Main navigation",
-    "sections": { "databases": "Databases", "ai": "AI" },
     "plugins": "Plugins",
     "aiActivity": "AI Activity",
     "pendingApprovals_one": "{{count}} request awaiting approval",

@@ -116,7 +116,6 @@
     "collapse": "Comprimi barra laterale",
     "expand": "Espandi barra laterale",
     "navigation": "Navigazione principale",
-    "sections": { "databases": "Database", "ai": "IA" },
     "plugins": "Plugin",
     "aiActivity": "Attività IA",
     "pendingApprovals_one": "{{count}} richiesta in attesa di approvazione",

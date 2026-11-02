@@ -86,7 +86,6 @@
     "collapse": "사이드바 접기",
     "expand": "사이드바 펼치기",
     "navigation": "기본 탐색",
-    "sections": { "databases": "데이터베이스", "ai": "AI" },
     "plugins": "플러그인",
     "aiActivity": "AI 활동",
     "pendingApprovals_one": "승인 대기 중인 요청 {{count}}개",

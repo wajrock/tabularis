@@ -109,7 +109,6 @@
     "collapse": "I-collapse ang sidebar",
     "expand": "I-expand ang sidebar",
     "navigation": "Pangunahing nabigasyon",
-    "sections": { "databases": "Mga database", "ai": "AI" },
     "plugins": "Mga plugin",
     "aiActivity": "AI Activity",
     "pendingApprovals_one": "{{count}} kahilingang naghihintay ng pag-apruba",

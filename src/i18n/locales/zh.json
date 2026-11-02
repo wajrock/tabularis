@@ -108,7 +108,6 @@
     "collapse": "收起侧边栏",
     "expand": "展开侧边栏",
     "navigation": "主导航",
-    "sections": { "databases": "数据库", "ai": "AI" },
     "plugins": "插件",
     "aiActivity": "AI 活动",
     "pendingApprovals_one": "{{count}} 个请求等待审批",

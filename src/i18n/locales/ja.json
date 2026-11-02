@@ -109,7 +109,6 @@
     "collapse": "サイドバーを折りたたむ",
     "expand": "サイドバーを展開",
     "navigation": "メインナビゲーション",
-    "sections": { "databases": "データベース", "ai": "AI" },
     "plugins": "プラグイン",
     "aiActivity": "AI アクティビティ",
     "pendingApprovals_one": "承認待ちのリクエストが {{count}} 件あります",

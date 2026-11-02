@@ -1,7 +1,7 @@
 import {useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import clsx from 'clsx';
-import {Cpu, Puzzle, Shield} from 'lucide-react';
+import {Cpu, Puzzle, Settings, Shield} from 'lucide-react';
 import {Badge} from '@/components/ui/Badge';
 import {WhatsNewModal} from '@/components/modals/WhatsNewModal';
 import {useAvailableUpdates} from '@/hooks/useAvailableUpdates';
@@ -14,18 +14,6 @@ import {ConnectionsNav} from './ConnectionsNav';
 import {NavFooter} from './NavFooter';
 import {NavHeader} from './NavHeader';
 import {NavItem} from './NavItem';
-
-function SectionTitle({children}: {children: string}) {
-    return (
-        <h2 className="mb-0.5 pb-1 pl-3 pt-4 text-[10px] font-semibold uppercase leading-3 tracking-[0.6px] text-muted/70 first:pt-2">
-            {children}
-        </h2>
-    );
-}
-
-function RailSeparator() {
-    return <div aria-hidden="true" className="mx-auto my-1 h-px w-8 bg-default" />;
-}
 
 /** The app's left navigation: expanded (240 px) or rail (64 px), as the user chose. */
 export function AppNav() {
@@ -70,7 +58,6 @@ export function AppNav() {
                 aria-label={t('sidebar.navigation')}
                 className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overflow-x-hidden pb-4"
             >
-                {!isCollapsed && <SectionTitle>{t('sidebar.sections.databases')}</SectionTitle>}
                 <ConnectionsNav
                     model={model}
                     variant={variant}
@@ -86,12 +73,6 @@ export function AppNav() {
                     badge={pluginBadge}
                     description={updates.pluginCount > 0 ? updates.pluginsTooltip : undefined}
                 />
-
-                {isCollapsed ? (
-                    <RailSeparator />
-                ) : (
-                    <SectionTitle>{t('sidebar.sections.ai')}</SectionTitle>
-                )}
                 <NavItem to="/mcp" icon={Cpu} label={t('sidebar.mcpServer')} variant={variant} />
                 <NavItem
                     to="/ai-activity"
@@ -100,6 +81,12 @@ export function AppNav() {
                     variant={variant}
                     badge={approvalsBadge}
                     description={pending.length > 0 ? approvalsLabel : undefined}
+                />
+                <NavItem
+                    to="/settings"
+                    icon={Settings}
+                    label={t('sidebar.settings')}
+                    variant={variant}
                 />
             </nav>
 
