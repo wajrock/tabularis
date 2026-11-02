@@ -322,7 +322,8 @@
             "warningBg": "#efebe4",
             "warningText": "#945f06",
             "dangerBg": "#f6e7e7",
-            "dangerText": "#aa4c4c"
+            "dangerText": "#aa4c4c",
+            "dangerSolid": "#c94a4a"
           }
         },
         "typography": {
@@ -418,6 +419,7 @@
         "--tint-accent-bg": "#e2ecfb",
         "--tint-accent-text": "#0b5ee7",
         "--tint-danger-bg": "#f6e7e7",
+        "--tint-danger-solid": "#c94a4a",
         "--tint-danger-text": "#aa4c4c",
         "--tint-success-bg": "#e2eee9",
         "--tint-success-text": "#157a3a",

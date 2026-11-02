@@ -99,6 +99,9 @@
     --color-tint-warning-fg: var(--tint-warning-text);
     --color-tint-danger-bg: var(--tint-danger-bg);
     --color-tint-danger-fg: var(--tint-danger-text);
+    --color-tint-danger-solid: var(--tint-danger-solid);
+    /* Modal backdrop: #0F172A at 50 %, the same for every theme. */
+    --color-backdrop: rgb(15 23 42 / 0.5);
     --shadow-card: var(--elevation-card);
     --shadow-menu: var(--elevation-menu);
     --shadow-modal: var(--elevation-modal);

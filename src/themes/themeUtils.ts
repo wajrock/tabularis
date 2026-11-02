@@ -145,6 +145,7 @@ export function applyThemeToCSS(theme: Theme): void {
     setOptional('--tint-warning-text', tint?.warningText);
     setOptional('--tint-danger-bg', tint?.dangerBg);
     setOptional('--tint-danger-text', tint?.dangerText);
+    setOptional('--tint-danger-solid', tint?.dangerSolid);
     setOptional('--elevation-card', theme.layout.shadow?.card);
     setOptional('--elevation-menu', theme.layout.shadow?.menu);
     setOptional('--elevation-modal', theme.layout.shadow?.modal);

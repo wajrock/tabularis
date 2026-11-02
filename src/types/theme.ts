@@ -85,6 +85,8 @@ export interface ThemeColors {
         warningText: string;
         dangerBg: string;
         dangerText: string;
+        /** Solid fill of destructive buttons, under `text.inverse`. */
+        dangerSolid: string;
     };
 }
 

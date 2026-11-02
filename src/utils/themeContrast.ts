@@ -79,6 +79,7 @@ export const CONTRAST_PAIRS: ContrastPair[] = [
         pairs([`tint.${tone}Text`], [`tint.${tone}Bg`], TEXT_CONTRAST),
     ),
     ...pairs(['tint.dangerText'], ['bg.base', 'bg.elevated'], TEXT_CONTRAST),
+    ...pairs(['text.inverse'], ['tint.dangerSolid'], TEXT_CONTRAST),
     ...pairs(
         ['status.success', 'status.warning', 'status.error'],
         ['bg.base', 'bg.elevated'],

@@ -72,6 +72,7 @@ export const tabularisLight: Theme = {
             warningText: '#945f06',
             dangerBg: '#f6e7e7',
             dangerText: '#aa4c4c',
+            dangerSolid: '#c94a4a',
         },
     },
     typography: {
