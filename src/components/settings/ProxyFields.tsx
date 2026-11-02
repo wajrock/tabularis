@@ -4,7 +4,8 @@ import {invoke} from '@tauri-apps/api/core';
 import {Save} from 'lucide-react';
 import {PasswordInput} from '@/components/ui/PasswordInput';
 import {useAlert} from '@/hooks/useAlert';
-import {SettingButtonGroup, SettingRow} from './SettingControls';
+import {SegmentedControl} from '@/components/ui/SegmentedControl';
+import {SettingRow} from './SettingControls';
 import {
     DEFAULT_PROXY_ENDPOINT,
     clampProxyPort,
@@ -106,7 +107,8 @@ export function ProxyFields({
                     label={t('settings.network.overrideMode')}
                     description={t('settings.network.overrideModeDesc')}
                 >
-                    <SettingButtonGroup<ProxyMode>
+                    <SegmentedControl<ProxyMode>
+                        ariaLabel={t('settings.network.overrideMode')}
                         value={mode}
                         onChange={onModeChange}
                         options={[
@@ -133,7 +135,8 @@ export function ProxyFields({
                         label={t('settings.network.protocol')}
                         description={t('settings.network.protocolDesc')}
                     >
-                        <SettingButtonGroup<ProxyProtocol>
+                        <SegmentedControl<ProxyProtocol>
+                            ariaLabel={t('settings.network.protocol')}
                             value={endpoint.protocol || 'http'}
                             onChange={(protocol) => patch({protocol})}
                             options={[

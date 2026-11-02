@@ -217,7 +217,7 @@ export const Select = ({
                 onClick={handleToggle}
                 disabled={disabled}
                 className={clsx(
-                    'w-full bg-base border rounded px-3 py-2 text-sm text-primary flex items-center justify-between transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',
+                    'h-8 w-full bg-base border rounded-md px-3 text-sm text-primary flex items-center justify-between transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',
                     disabled
                         ? 'opacity-50 cursor-not-allowed border-default'
                         : hasError

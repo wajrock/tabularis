@@ -15,6 +15,8 @@ import {ChevronRight} from 'lucide-react';
 export interface MenuItem {
     label: string;
     icon?: ElementType;
+    /** Custom content in the icon slot, e.g. a status dot; ignored when `icon` is set. */
+    leading?: ReactNode;
     onSelect?: () => void;
     disabled?: boolean;
     danger?: boolean;
@@ -190,6 +192,7 @@ export function Menu({
                                     className={clsx('shrink-0', !entry.danger && 'text-secondary')}
                                 />
                             )}
+                            {!entry.icon && entry.leading}
                             <span className="min-w-0 flex-1 truncate">{entry.label}</span>
                             {entry.trailing}
                             {entry.submenu && (

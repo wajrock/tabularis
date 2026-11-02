@@ -4,7 +4,7 @@ import {Check, FolderPlus, LayoutGrid, List, X} from 'lucide-react';
 import {Button} from '@/components/ui/Button';
 import {IconButton} from '@/components/ui/IconButton';
 import {SearchBar} from '@/components/ui/SearchBar';
-import {FOCUS_RING_INSET} from '@/components/ui/focusRing';
+import {SegmentedControl} from '@/components/ui/SegmentedControl';
 
 export type ConnectionsViewMode = 'grid' | 'list';
 
@@ -40,10 +40,6 @@ export function ConnectionsToolbar({
     onViewModeChange,
 }: ConnectionsToolbarProps) {
     const {t} = useTranslation();
-    const views = [
-        {mode: 'grid' as const, icon: LayoutGrid, label: t('connections.gridView')},
-        {mode: 'list' as const, icon: List, label: t('connections.listView')},
-    ];
 
     return (
         <div className="flex items-center justify-between gap-3">
@@ -102,31 +98,15 @@ export function ConnectionsToolbar({
                     </div>
                 )}
 
-                <div
-                    role="group"
-                    aria-label={t('connections.viewMode')}
-                    className="flex h-9 gap-1 rounded-md bg-surface-primary p-[3px]"
-                >
-                    {views.map(({mode, icon: Icon, label}) => (
-                        <button
-                            key={mode}
-                            type="button"
-                            onClick={() => onViewModeChange(mode)}
-                            aria-pressed={viewMode === mode}
-                            aria-label={label}
-                            title={label}
-                            className={clsx(
-                                'flex w-[34px] items-center justify-center rounded-md transition-colors',
-                                FOCUS_RING_INSET,
-                                viewMode === mode
-                                    ? 'bg-base text-primary shadow-card'
-                                    : 'text-secondary hover:text-primary',
-                            )}
-                        >
-                            <Icon size={16} />
-                        </button>
-                    ))}
-                </div>
+                <SegmentedControl
+                    ariaLabel={t('connections.viewMode')}
+                    value={viewMode}
+                    onChange={onViewModeChange}
+                    options={[
+                        {value: 'grid', icon: LayoutGrid, ariaLabel: t('connections.gridView')},
+                        {value: 'list', icon: List, ariaLabel: t('connections.listView')},
+                    ]}
+                />
             </div>
         </div>
     );

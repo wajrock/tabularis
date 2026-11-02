@@ -4,11 +4,9 @@ import {useSettings} from '@/hooks/useSettings';
 import {useDatabase} from '@/hooks/useDatabase';
 import {DEFAULT_MASKING_PATTERNS, normalizeMaskingPatterns} from '@/utils/columnMasking';
 import {Select} from '@/components/ui/Select';
+import {TEXTAREA_CLASS} from '@/components/ui/Textarea';
 import {MaskingOverridesEditor} from './MaskingOverridesEditor';
 import {SettingSection, SettingRow, SettingToggle} from './SettingControls';
-
-const TEXTAREA_CLASS =
-    'w-full h-28 bg-base border border-strong rounded-lg p-3 text-primary text-sm font-mono focus:outline-none focus:border-focus transition-colors resize-y';
 
 /** Privacy settings: sensitive-column masking in the results grid (#485). */
 export function PrivacyTab() {
@@ -64,7 +62,7 @@ export function PrivacyTab() {
                                 setPatternsDraft(null);
                             }
                         }}
-                        className={TEXTAREA_CLASS}
+                        className={`${TEXTAREA_CLASS} h-28`}
                         placeholder={DEFAULT_MASKING_PATTERNS.join('\n')}
                     />
                 </SettingRow>

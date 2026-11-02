@@ -33,7 +33,7 @@ describe('AiTab proxy configuration', () => {
     it('keeps a blank custom endpoint editable and persists it after entering a host', async () => {
         render(<AiTab />);
         await screen.findByText('settings.ai.configured');
-        fireEvent.click(screen.getByRole('button', {name: 'settings.network.modeCustom'}));
+        fireEvent.click(screen.getByRole('radio', {name: 'settings.network.modeCustom'}));
         const host = await screen.findByPlaceholderText('127.0.0.1');
         expect(host).toHaveValue('');
         expect(updateSetting).toHaveBeenLastCalledWith('aiProviderProxies', {});
@@ -51,7 +51,7 @@ describe('AiTab proxy configuration', () => {
                 },
             }),
         );
-        fireEvent.click(screen.getByRole('button', {name: 'settings.network.modeInherit'}));
+        fireEvent.click(screen.getByRole('radio', {name: 'settings.network.modeInherit'}));
         expect(screen.queryByPlaceholderText('127.0.0.1')).not.toBeInTheDocument();
         expect(updateSetting).toHaveBeenLastCalledWith('aiProviderProxies', {});
     });

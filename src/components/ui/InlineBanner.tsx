@@ -4,13 +4,13 @@ import clsx from 'clsx';
 export type InlineBannerTone = 'amber' | 'red' | 'green' | 'neutral';
 
 const TONE_CLASS: Record<InlineBannerTone, string> = {
-    amber: 'bg-accent-warning/10 border-accent-warning/20 text-accent-warning',
-    red: 'bg-accent-error/10 border-accent-error/20 text-accent-error',
-    green: 'bg-accent-success/10 border-accent-success/20 text-accent-success',
-    neutral: 'bg-base border-default text-secondary',
+    amber: 'bg-tint-warning-bg text-tint-warning-fg',
+    red: 'bg-tint-danger-bg text-tint-danger-fg',
+    green: 'bg-tint-success-bg text-tint-success-fg',
+    neutral: 'bg-surface-primary text-secondary',
 };
 
-/** Compact notice row used inside install dialogs: icon on the left, text on the right. */
+/** Compact tinted notice: icon on the left, text on the right. */
 export function InlineBanner({
     tone,
     icon,
@@ -25,7 +25,7 @@ export function InlineBanner({
     return (
         <div
             role={role}
-            className={clsx('rounded-lg border p-3 flex gap-2 text-xs', TONE_CLASS[tone])}
+            className={clsx('flex gap-2 rounded-md p-3 text-xs leading-4', TONE_CLASS[tone])}
         >
             <span className="shrink-0 mt-0.5">{icon}</span>
             <div className="min-w-0 flex-1">{children}</div>
