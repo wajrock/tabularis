@@ -1487,6 +1487,7 @@ export const Connections = () => {
                     onClose={() => setIsExportModalOpen(false)}
                     onExport={handleExport}
                     selectedCount={exportSelectionOnly ? selectedIds.size : 0}
+                    totalCount={connections.length}
                 />
                 {isImportAppModalOpen && (
                     <ImportFromAppModal

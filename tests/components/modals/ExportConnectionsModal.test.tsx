@@ -12,15 +12,18 @@ function renderModal(props: Partial<Parameters<typeof ExportConnectionsModal>[0]
 }
 
 describe('ExportConnectionsModal', () => {
-    it('shows the generic subtitle when no selection is active', () => {
-        renderModal();
-        expect(screen.getByText('connections.exportModal.subtitle')).toBeInTheDocument();
+    it('puts the number of exported connections in the Export button', () => {
+        renderModal({totalCount: 12});
+        expect(
+            screen.getByRole('button', {name: 'connections.exportModal.exportCount'}),
+        ).toBeInTheDocument();
     });
 
-    it('shows the selection subtitle when connections are selected', () => {
-        renderModal({selectedCount: 3});
-        expect(screen.getByText('connections.exportModal.subtitleSelected')).toBeInTheDocument();
-        expect(screen.queryByText('connections.exportModal.subtitle')).not.toBeInTheDocument();
+    it('falls back to a plain Export label without a count', () => {
+        renderModal();
+        expect(
+            screen.getByRole('button', {name: 'connections.exportModal.export'}),
+        ).toBeInTheDocument();
     });
 
     it('requires a password before an encrypted export', async () => {
@@ -31,6 +34,16 @@ describe('ExportConnectionsModal', () => {
                 screen.getByText('connections.exportModal.passwordRequired'),
             ).toBeInTheDocument();
         });
+        expect(onExport).not.toHaveBeenCalled();
+    });
+
+    it('flags a confirmation that does not match', () => {
+        const {onExport} = renderModal();
+        const [password, confirm] = screen.getAllByLabelText(/password/i);
+        fireEvent.change(password, {target: {value: 'secret'}});
+        fireEvent.change(confirm, {target: {value: 'secreT'}});
+        expect(screen.getByText('connections.exportModal.passwordMismatch')).toBeInTheDocument();
+        fireEvent.click(screen.getByText('connections.exportModal.export'));
         expect(onExport).not.toHaveBeenCalled();
     });
 
